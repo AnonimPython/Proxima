@@ -21,6 +21,7 @@ from handlers.start import router
 BOT_TOKEN = os.getenv('TELEGRAM_TOKEN')
 
 # Инициализация бота
+#* Initial Bot
 bot = Bot(
     token=BOT_TOKEN,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
@@ -29,6 +30,7 @@ dp = Dispatcher()
 
 
 # Запуск бота
+#* Start Bot
 async def main():
     dp.include_router(router)
     await dp.start_polling(bot)
