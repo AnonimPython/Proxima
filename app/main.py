@@ -16,6 +16,7 @@ from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 
 from handlers.start import router
+from handlers.base_commands import router as bs_router
 
 
 BOT_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -32,7 +33,8 @@ dp = Dispatcher()
 # Запуск бота
 #* Start Bot
 async def main():
-    dp.include_router(router)
+    dp.include_router(bs_router)
+    dp.include_routers(router)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
