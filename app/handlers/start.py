@@ -1,7 +1,9 @@
 '''
 FILE FOR WORK WITH COMMANDS
 '''
-
+from dotenv import load_dotenv
+import os
+load_dotenv()
 from aiogram import F, Router
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
@@ -21,12 +23,21 @@ from database.models import (
     FoundMatchSchema,
 )
 
+#todo: replace / commands to keyboards Reply or Inline
 router = Router()
 
 class RegistrationStates(StatesGroup):
     waiting_for_game_id = State()
     waiting_for_nickname = State()
 
+def get_user_league(telegram_id: int):
+    with Session(engine) as session:
+        user_league = session.exec(
+            select(GameProfilesSchema.league)
+            .join(UsersSchema, GameProfilesSchema.user_id == UsersSchema.user_id)
+            .where(UsersSchema.telegram_id == telegram_id)
+        ).first()
+    return user_league 
 
 #* commands
 #? register user telegram
@@ -65,25 +76,26 @@ async def start_handler(message: Message):
         "/register\n\n"
         "📋 <b>Доступные команды:</b>\n"
         "/help - Помощь\n\n"
+        #! test
         f"Привет! Твой Telegram ID: {telegram_id}\n"
         f"Твоё имя: {first_name}\n"
         f"Username: {username}\n"
         f"Полные данные: {last_name}"
     )
     
-#? register game profile    
+#? register game profile
+#todo create exit button to stop register   
 @router.message(Command("register"))
 async def command_register_handler(message: Message, state: FSMContext) -> None:
     """Начало регистрации игрового профиля"""
     
+    #* in /start we have this code
     with Session(engine) as session:
-        # Проверяем, есть ли пользователь в базе
         user = session.exec(
             select(UsersSchema).where(UsersSchema.telegram_id == message.from_user.id)
         ).first()
         
         if not user:
-            # Сначала создаем пользователя
             new_user = UsersSchema(
                 telegram_id=message.from_user.id,
                 username=message.from_user.username,
@@ -98,20 +110,23 @@ async def command_register_handler(message: Message, state: FSMContext) -> None:
             user_id = user.user_id
         
         # Проверяем, есть ли уже игровой профиль
+        # Check have a user a game profile
         existing_profile = session.exec(
             select(GameProfilesSchema).where(GameProfilesSchema.user_id == user_id)
         ).first()
-        
+        league = get_user_league(message.from_user.id)
         if existing_profile:
             await message.answer(
                 "🔹 У вас уже есть зарегистрированный игровой профиль!\n"
                 #! test
                 f"Ник: {existing_profile.nickname}\n"
-                f"ID: {existing_profile.game_id}"
+                f"ID: {existing_profile.game_id}\n"
+                f"Лига: {league.capitalize()}"
             )
             return
         
         # Сохраняем user_id в состоянии и переходим к вводу game_id
+        # save in State() game_id
         await state.set_data({"user_id": user_id})
         await state.set_state(RegistrationStates.waiting_for_game_id)
         await message.answer(
@@ -137,6 +152,7 @@ async def process_game_id(message: Message, state: FSMContext) -> None:
         return
     
     # Проверяем, не занят ли этот game_id
+    # checking game_id is used or not
     with Session(engine) as session:
         existing_game_id = session.exec(
             select(GameProfilesSchema).where(GameProfilesSchema.game_id == game_id)
@@ -147,6 +163,7 @@ async def process_game_id(message: Message, state: FSMContext) -> None:
             return
     
     # Сохраняем game_id и переходим к вводу nickname
+    # save in State game_id
     await state.update_data({"game_id": game_id})
     await state.set_state(RegistrationStates.waiting_for_nickname)
     
@@ -164,6 +181,7 @@ async def process_nickname(message: Message, state: FSMContext) -> None:
     nickname = message.text.strip()
     
     # Валидация никнейма
+    # Validation nickename
     if len(nickname) > 16:
         await message.answer("❌ Никнейм не должен превышать 16 символов! Попробуйте снова:")
         return
@@ -173,11 +191,13 @@ async def process_nickname(message: Message, state: FSMContext) -> None:
         return
     
     # Получаем данные из состояния
+    # getting data from State()
     data = await state.get_data()
     user_id = data.get("user_id")
     game_id = data.get("game_id")
     
     # Создаем игровой профиль
+    # create game profile
     with Session(engine) as session:
         new_profile = GameProfilesSchema(
             user_id=user_id,
@@ -189,7 +209,6 @@ async def process_nickname(message: Message, state: FSMContext) -> None:
         session.commit()
         session.refresh(new_profile)
         
-        # Создаем запись статистики для профиля
         new_stats = UserStatsSchema(
             user_id=user_id,
             profile_id=new_profile.game_profile_id
@@ -198,14 +217,25 @@ async def process_nickname(message: Message, state: FSMContext) -> None:
         session.commit()
     
     # Завершаем состояние
+    # clear State()
     await state.clear()
     
+    league = get_user_league(message.from_user.id)        
     await message.answer(
         "🎉 Регистрация завершена!\n\n"
         f"✅ Ваш игровой профиль:\n"
         f"▫️ Ник: {nickname}\n"
         f"▫️ Game ID: {game_id}\n"
-        f"▫️ Лига: Стартер\n\n"
+        f"▫️ Лига: {league.capitalize()}\n\n"
+        #todo: add buttons [✅ Подтвердить] [✏️ Изменить] | [✅ Accept] [✏️ Remake]
         f"Теперь вы можете использовать все функции бота!\n"
         f"Напишите /profile чтобы посмотреть статистику"
     )
+#! testing how bot work in groups and supergroups 
+CHAT_ID = os.getenv('CHAT_ID_SPEAKING')
+@router.message()
+async def handle_messages(message: Message):
+    if message.chat.id == CHAT_ID and "test" in message.text.lower():
+        await message.reply("🍎 I catch message test")
+    else:
+        return
