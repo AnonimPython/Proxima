@@ -1,6 +1,7 @@
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+import random
+from sqlmodel import Field, Session, SQLModel, create_engine, select,delete
 from typing import Optional, List, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import json
 
@@ -156,8 +157,23 @@ class FoundMatchSchema(SQLModel, table=True):
         '''Cheking are lobby is full (10 players)'''
         return self.current_players >= self.max_players
 
+class UserBansSchema(SQLModel, table=True):
+    __tablename__ = "user_bans"
+    
+    ban_id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.user_id", nullable=False)
+    banned_by: int = Field(foreign_key="users.user_id", nullable=False)  # Кто забанил
+    ban_type: str = Field(default="admin_mute")  # admin_mute, lobby_leave, etc
+    reason: str = Field(default="Не указана")
+    duration_minutes: int = Field(default=60)  # Длительность в минутах
+    banned_at: datetime = Field(default_factory=lambda: datetime.now(moscow_tz))
+    unbanned_at: datetime = Field(default_factory=lambda: datetime.now(moscow_tz) + timedelta(minutes=60))
+    is_active: bool = Field(default=True)
+    unbanned_by: Optional[int] = Field(foreign_key="users.user_id", default=None)  # Кто разбанил
+    unbanned_at_time: Optional[datetime] = Field(default=None)  # Когда разбанен
+    
 # Create DB
-#todo Remake to PostgreSQL (or user Supabase.com)
+#todo Remake to PostgreSQL (or use Supabase.com)
 #? for test I will use SQLite3
 engine = create_engine("sqlite:///database.db")
 SQLModel.metadata.create_all(engine)
