@@ -17,6 +17,9 @@ from aiogram.client.default import DefaultBotProperties
 
 from handlers.start import router
 from handlers.base_commands import router as bs_router
+from handlers.matches import router as matches_router
+from handlers.clans import router as clans_router
+from handlers.personal.admin import router as admin_router
 
 
 BOT_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -33,6 +36,9 @@ dp = Dispatcher()
 # Запуск бота
 #* Start Bot
 async def main():
+    dp.include_routers(admin_router)
+    dp.include_routers(clans_router)
+    dp.include_routers(matches_router)
     dp.include_router(bs_router)
     dp.include_routers(router)
     await dp.start_polling(bot)
