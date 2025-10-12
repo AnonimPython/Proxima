@@ -34,6 +34,37 @@ router = Router()
 #         ).first()
 #     return user_league
 
+def get_level_info(experience: int) -> tuple[int, int]:
+    """
+        Оределяем уровень и сколько нужно до следующего
+        We determine the level and how much time is needed until the next one
+    """
+    if experience < 300:
+        return 1, 300 - experience
+    elif experience < 500:
+        return 2, 500 - experience
+    elif experience < 800:
+        return 3, 800 - experience
+    elif experience < 1200:
+        return 4, 1200 - experience
+    elif experience < 1500:
+        return 5, 1500 - experience
+    elif experience < 1900:
+        return 6, 1900 - experience
+    elif experience < 2300:
+        return 7, 2300 - experience
+    elif experience < 2600:
+        return 8, 2600 - experience
+    elif experience < 3000:
+        return 9, 3000 - experience
+    else:
+        return 10, 0
+
+# def create_level_progress_bar(percentage: float, length: int = 20) -> str:
+#     """Создает прогресс-бар для уровня"""
+#     filled = int((percentage / 100) * length)
+#     return '▰' * filled + '▱' * (length - filled)
+
 
 
 @router.message(Command("help"))
@@ -46,12 +77,8 @@ async def help_handler(message: Message):
         "• /stats - Детальная статистика\n\n"
         
         "🎯 <b>Игровой процесс</b>\n" 
-        "• /find_match - Поиск игры\n"
+        "• /lobby - Поиск игры\n"
         "• /top - Рейтинг игроков\n\n"
-        
-        "⚙️ <b>Настройки</b>\n"
-        "• /settings - Настройки бота\n"
-        "• /help - Помощь\n\n"
         
         "🔗 <b>Ссылки</b>\n"
         "• <a href='http://telegram.org/'>Правила</a>\n"
@@ -76,34 +103,58 @@ async def support_button_handler(message: Message):
 @router.message(Command("profile"))
 async def profile_handler(message: Message):
     with Session(engine) as session:
-        # Получаем несколько полей сразу
         result = session.exec(
             select(
                 GameProfilesSchema.nickname,
                 GameProfilesSchema.league,
                 GameProfilesSchema.game_id,
                 GameProfilesSchema.join_date,
+                GameProfilesSchema.total_games,
+                GameProfilesSchema.level,
+                GameProfilesSchema.experience, 
+                UserStatsSchema.kills,
+                UserStatsSchema.deaths,
+                UserStatsSchema.kd_ratio,
+                UserStatsSchema.wins,
+                UserStatsSchema.losses,
+                UserStatsSchema.win_rate
             )
             .join(UsersSchema, GameProfilesSchema.user_id == UsersSchema.user_id)
+            .join(UserStatsSchema, UserStatsSchema.user_id == UsersSchema.user_id)
             .where(UsersSchema.telegram_id == message.from_user.id)
         ).first()
     
     if result:
-        nickname, league, game_id, join_date = result
+        nickname, league, game_id, join_date, total_games, level, experience, kills, deaths, kd_ratio, wins, losses, win_rate = result
         
+        current_level, exp_to_next = get_level_info(experience)
+        
+        # Формируем текст для следующего уровня
+        # Write a new messasge about new lvl
+        if current_level == 10:
+            next_level_text = "MAХ LVL"
+        else:
+            next_level_text = f"{exp_to_next} ELO"
         
         await message.answer(
             f"👤 <b>{nickname}</b>\n"
             f"🏆 <b>Лига:</b> {league.capitalize()}\n"
             f"🔢 <b>ID:</b> {game_id}\n\n"
             
-            f"⚔️ <b>KD Ratio:</b> 1.45\n"
-            f"▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰ 72%\n"
-            f"🗡️ Убийств: <b>1444</b>\n"
-            f"💀 Смертей: <b>40</b>\n\n"
-            f"🎯 <b>Игр сыграно:</b> 123\n"
+            f"⭐ <b>Уровень: {current_level}</b>\n"
+            f"📊 ELO: {experience}\n"
+            f"🎯 До уровня {current_level + 1 if current_level < 10 else 'MAX'}: {next_level_text}\n\n"
+            
+            f"⚔️ <b>KD Ratio:</b> {kd_ratio:.2f}\n"
+            f"🗡️ Убийств: <b>{kills}</b>\n"
+            f"💀 Смертей: <b>{deaths}</b>\n\n"
+            
+            f"🎯 <b>Игр сыграно:</b> {total_games}\n"
+            f"📊 <b>Win Rate:</b> {win_rate:.1f}%\n"
+            f"✅ Побед: <b>{wins}</b> | ❌ Поражений: <b>{losses}</b>\n\n"
+            
             f"🏅 <b>MVP:</b> 123 раз\n"
-            f"📅 <b>В игре с:</b> {join_date.strftime('%d.%m.%Y')}",
+            f"📅 <b>На проекте с:</b> {join_date.strftime('%d.%m.%Y')}",
             parse_mode="HTML",
             reply_markup=get_main_keyboard(),
         )
