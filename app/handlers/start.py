@@ -3,6 +3,8 @@ FILE FOR WORK WITH COMMANDS
 '''
 from dotenv import load_dotenv
 import os
+
+
 load_dotenv()
 from aiogram import F, Router
 from aiogram.filters import CommandStart, Command
@@ -10,6 +12,8 @@ from aiogram.types import Message, CallbackQuery
 from datetime import datetime
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+#* Keyboards
+from .keyboards import get_main_keyboard, get_game_keyboard, get_start_keyboard
 #* Database
 from sqlmodel import Session, select
 from typing import Optional
@@ -25,7 +29,7 @@ from database.models import (
 
 #todo: replace / commands to keyboards Reply or Inline
 router = Router()
-
+#todo: create a verify account using phone number
 class RegistrationStates(StatesGroup):
     waiting_for_game_id = State()
     waiting_for_nickname = State()
@@ -40,14 +44,14 @@ def get_user_league(telegram_id: int):
     return user_league 
 
 #* commands
-#? register user telegram
+# ? register user telegram
 @router.message(Command("start"))
 async def start_handler(message: Message):
     telegram_id = message.from_user.id
     username = message.from_user.username or "Без имени"
     first_name = message.from_user.first_name or "Без имени"
     last_name = message.from_user.last_name or "Без имени"
-    
+    #todo: create a func for always cheking user in system (create in services folder)
     # Проверка существования пользователя в БД
     # check user in db
     with Session(engine) as session:
@@ -68,20 +72,33 @@ async def start_handler(message: Message):
             session.add(user)
             session.commit()
             session.refresh(user)
-
-    await message.answer(
-        "🚀 <b>Добро пожаловать в Proxima!</b>\n\n"
-        "Присоединяйся к элитному сообществу\n"
-        "<i>Для начала пройди регистрацию</i>\n\n"
-        "/register\n\n"
-        "📋 <b>Доступные команды:</b>\n"
-        "/help - Помощь\n\n"
-        #! test
-        f"Привет! Твой Telegram ID: {telegram_id}\n"
-        f"Твоё имя: {first_name}\n"
-        f"Username: {username}\n"
-        f"Полные данные: {last_name}"
-    )
+            #todo: message.answer_sticker use also
+            await message.answer(
+                "🚀 <b>Добро пожаловать в Proxima!</b>\n\n"
+                "Присоединяйся к элитному сообществу\n"
+                "<i>Для начала пройди регистрацию</i>\n\n"
+                "/register\n\n"
+                "📋 <b>Доступные команды:</b>\n"
+                "/help - Помощь\n\n"
+                #! test
+                f"Привет! Твой Telegram ID: {telegram_id}\n"
+                f"Твоё имя: {first_name}\n"
+                f"Username: {username}\n"
+                f"Полные данные: {last_name}",
+                reply_markup=get_start_keyboard()
+            )
+        else:
+            await message.answer(
+                f"<b>С возвращением, {username}!🌟</b>\n\n"
+                "<b>Продолжить путь 🚀</b>\n"
+                "/profile - Профиль\n"
+                "/lobby - Найти лобби\n"
+                "/stats - Детальный прогресс\n"
+                "/top - Топ проекта\n\n",
+                parse_mode="HTML",
+                reply_markup=get_game_keyboard()
+            )
+    
     
 #? register game profile
 #todo create exit button to stop register   
