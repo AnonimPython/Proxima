@@ -1,5 +1,5 @@
 import random
-from sqlmodel import Field, Session, SQLModel, create_engine, select,delete
+from sqlmodel import Field, Session, SQLModel, create_engine, select, delete, Relationship
 from typing import Optional, List, Any
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -171,6 +171,16 @@ class UserBansSchema(SQLModel, table=True):
     is_active: bool = Field(default=True)
     unbanned_by: Optional[int] = Field(foreign_key="users.user_id", default=None)  # Кто разбанил
     unbanned_at_time: Optional[datetime] = Field(default=None)  # Когда разбанен
+
+class MatchPhotosSchema(SQLModel, table=True):
+    __tablename__ = "match_photos"
+    
+    photo_id: Optional[int] = Field(default=None, primary_key=True)
+    match_id: int = Field(foreign_key="matches.match_id", nullable=False)
+    user_id: int = Field(foreign_key="users.user_id", nullable=False)
+    photo_path: str = Field(nullable=False)  # Путь к файлу фото | path to photo
+    uploaded_at: datetime = Field(default_factory=lambda: datetime.now(moscow_tz))
+    status: str = Field(default="pending")  # pending, approved, rejected
     
 # Create DB
 #todo Remake to PostgreSQL (or use Supabase.com)
