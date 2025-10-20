@@ -20,6 +20,8 @@ from handlers.base_commands import router as bs_router
 from handlers.matches import router as matches_router
 from handlers.clans import router as clans_router
 from handlers.personal.admin import router as admin_router
+from handlers.personal.moderator import router as moderator_router
+from handlers.register_matches import router as register_matches_router
 
 
 BOT_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -36,6 +38,8 @@ dp = Dispatcher()
 # Запуск бота
 #* Start Bot
 async def main():
+    dp.include_routers(register_matches_router)
+    dp.include_routers(moderator_router)
     dp.include_routers(admin_router)
     dp.include_routers(clans_router)
     dp.include_routers(matches_router)
@@ -47,4 +51,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\n❌ Бот остановлен")
+        print("\n❌ Бот остановлен|Bot Stopped")
