@@ -1,5 +1,6 @@
 '''
 ACCESS CHECKER FOR ADMIN/MODERATOR COMMANDS
+ПРОВЕРКА ДОСТУПА ДЛЯ АДМИН/МОДЕРАТОР КОМАНД
 '''
 
 from sqlmodel import Session, select
@@ -13,7 +14,7 @@ def is_admin(user_id: int) -> bool:
     with Session(engine) as session:
         user_stmt = select(UsersSchema).where(UsersSchema.telegram_id == user_id)
         user = session.exec(user_stmt).first()
-        return user and user.role in ["admin", "moderator"]
+        return user and user.role == "admin"
 
 def is_moderator(user_id: int) -> bool:
     """
@@ -24,6 +25,33 @@ def is_moderator(user_id: int) -> bool:
         user_stmt = select(UsersSchema).where(UsersSchema.telegram_id == user_id)
         user = session.exec(user_stmt).first()
         return user and user.role in ["moderator", "admin"]
+
+def can_ban_user(executor_id: int, target_user) -> bool:
+    """
+        Проверяет, может ли исполнитель забанить игрока
+        Checks if executor can ban target
+    """
+    # Исполнитель не может банить сам себя
+    if executor_id == target_user.telegram_id:
+        return False
+    
+    # Получаем роль исполнителя
+    with Session(engine) as session:
+        executor_stmt = select(UsersSchema).where(UsersSchema.telegram_id == executor_id)
+        executor = session.exec(executor_stmt).first()
+        
+        if not executor:
+            return False
+        
+        # Админ может банить модераторов и игроков
+        if executor.role == "admin":
+            return target_user.role in ["moderator", "player"]
+        
+        # Модератор может банить только игроков
+        if executor.role == "moderator":
+            return target_user.role == "player"
+        
+        return False
 
 def find_user_by_identifier(identifier: str):
     """
