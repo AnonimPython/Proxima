@@ -1,4 +1,20 @@
 {
+  "start": {
+    "welcome": "🎮 Welcome to FaceIT bot!",
+    "welcome_back": "👋 Welcome back, {username}!",
+    "register_prompt": "To start playing, you need to register a game profile."
+  },
+  "register": {
+    "already_exists": "✅ You already have a game profile!",
+    "enter_game_id": "🎮 Enter your Game ID:",
+    "game_id_rules": "• Numbers only\n• Minimum 8 characters",
+    "invalid_game_id": "❌ Invalid Game ID! Numbers only, minimum 8 characters.",
+    "game_id_taken": "❌ This Game ID is already taken!",
+    "enter_nickname": "👤 Enter your nickname:",
+    "nickname_rules": "• 2-16 characters",
+    "invalid_nickname": "❌ Invalid nickname! 2-16 characters.",
+    "complete": "🎉 Registration completed!"
+  },
   "help": {
     "title": "🎮 <b>BOT COMMANDS</b>",
     "profile_section": "📊 <b>Profile</b>",
