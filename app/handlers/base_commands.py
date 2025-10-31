@@ -10,7 +10,7 @@ from aiogram.types import Message
 
 from .matches import lobby_handler
 #* Локализация | Localization
-from localization import t
+from localization import translate
 
 #* Keyboards | Клавиатуры
 from .keyboards import get_main_keyboard, get_game_keyboard, get_start_keyboard
@@ -27,10 +27,6 @@ from database.models import (
 )
 
 router = Router()
-
-# Простая функция для получения языка | Simple function to get language
-def get_lang(user_id: int) -> str:
-    return 'ru'  # Пока всегда русский | For now always Russian
 
 def get_level_info(experience: int) -> tuple[int, int]:
     """
@@ -61,22 +57,22 @@ def get_level_info(experience: int) -> tuple[int, int]:
 @router.message(Command("help"))
 async def help_handler(message: Message):
     """Обработчик команды помощи | Help command handler"""
-    lang = get_lang(message.from_user.id)
+    telegram_id = message.from_user.id
     
     await message.answer(
-        f"{t('help.title', lang)}\n\n"
+        f"{translate('help.title', telegram_id)}\n\n"
         
-        f"{t('help.profile_section', lang)}\n"
-        f"{t('help.profile_command', lang)}\n"
-        f"{t('help.stats_command', lang)}\n\n"
+        f"{translate('help.profile_section', telegram_id)}\n"
+        f"{translate('help.profile_command', telegram_id)}\n"
+        f"{translate('help.stats_command', telegram_id)}\n\n"
         
-        f"{t('help.gameplay_section', lang)}\n"
-        f"{t('help.lobby_command', lang)}\n"
-        f"{t('help.top_command', lang)}\n\n"
+        f"{translate('help.gameplay_section', telegram_id)}\n"
+        f"{translate('help.lobby_command', telegram_id)}\n"
+        f"{translate('help.top_command', telegram_id)}\n\n"
         
-        f"{t('help.links_section', lang)}\n"
-        f"{t('help.rules_link', lang)}\n"
-        f"{t('help.faq_link', lang)}",
+        f"{translate('help.links_section', telegram_id)}\n"
+        f"{translate('help.rules_link', telegram_id)}\n"
+        f"{translate('help.faq_link', telegram_id)}",
         disable_web_page_preview=True,
         parse_mode="HTML",
         reply_markup=get_main_keyboard(),
@@ -85,15 +81,15 @@ async def help_handler(message: Message):
 @router.message(Command("support"))
 async def support_button_handler(message: Message):
     """Обработчик команды поддержки | Support command handler"""
-    lang = get_lang(message.from_user.id)
+    telegram_id = message.from_user.id
     
     await message.answer(
-        f"{t('support.title', lang)}\n\n"
-        f"{t('support.contact_info', lang)}\n"
-        f"{t('support.tech_support', lang)}\n"
-        f"{t('support.main_admin', lang)}\n\n"
-        f"{t('support.creator', lang)}\n\n"
-        f"{t('support.ready_to_help', lang)}",
+        f"{translate('support.title', telegram_id)}\n\n"
+        f"{translate('support.contact_info', telegram_id)}\n"
+        f"{translate('support.tech_support', telegram_id)}\n"
+        f"{translate('support.main_admin', telegram_id)}\n\n"
+        f"{translate('support.creator', telegram_id)}\n\n"
+        f"{translate('support.ready_to_help', telegram_id)}",
         parse_mode="HTML",
         reply_markup=get_main_keyboard()
     )
@@ -101,7 +97,7 @@ async def support_button_handler(message: Message):
 @router.message(Command("profile"))
 async def profile_handler(message: Message):
     """Обработчик команды профиля | Profile command handler"""
-    lang = get_lang(message.from_user.id)
+    telegram_id = message.from_user.id
     
     with Session(engine) as session:
         result = session.exec(
@@ -132,108 +128,108 @@ async def profile_handler(message: Message):
         
         # Формируем текст для следующего уровня | Format text for next level
         if current_level == 10:
-            next_level_text = t('profile.max_level', lang)
+            next_level_text = translate('profile.max_level', telegram_id)
         else:
-            next_level_text = f"{exp_to_next} {t('profile.elo', lang)}"
+            next_level_text = f"{exp_to_next} {translate('profile.elo', telegram_id)}"
         
         await message.answer(
             f"👤 <b>{nickname}</b>\n"
-            f"🏆 <b>{t('profile.league', lang)}:</b> {league.capitalize()}\n"
-            f"🔢 <b>{t('profile.id', lang)}:</b> {game_id}\n\n"
+            f"🏆 <b>{translate('profile.league', telegram_id)}:</b> {league.capitalize()}\n"
+            f"🔢 <b>{translate('profile.id', telegram_id)}:</b> {game_id}\n\n"
             
-            f"⭐ <b>{t('profile.level', lang)}: {current_level}</b>\n"
-            f"📊 {t('profile.elo', lang)}: {experience}\n"
-            f"🎯 {t('profile.to_next_level', lang)} {current_level + 1 if current_level < 10 else 'MAX'}: {next_level_text}\n\n"
+            f"⭐ <b>{translate('profile.level', telegram_id)}: {current_level}</b>\n"
+            f"📊 {translate('profile.elo', telegram_id)}: {experience}\n"
+            f"🎯 {translate('profile.to_next_level', telegram_id)} {current_level + 1 if current_level < 10 else 'MAX'}: {next_level_text}\n\n"
             
-            f"⚔️ <b>{t('profile.kd_ratio', lang)}:</b> {kd_ratio:.2f}\n"
-            f"🗡️ {t('profile.kills', lang)}: <b>{kills}</b>\n"
-            f"💀 {t('profile.deaths', lang)}: <b>{deaths}</b>\n\n"
+            f"⚔️ <b>{translate('profile.kd_ratio', telegram_id)}:</b> {kd_ratio:.2f}\n"
+            f"🗡️ {translate('profile.kills', telegram_id)}: <b>{kills}</b>\n"
+            f"💀 {translate('profile.deaths', telegram_id)}: <b>{deaths}</b>\n\n"
             
-            f"🎯 <b>{t('profile.games_played', lang)}:</b> {total_games}\n"
-            f"📊 <b>{t('profile.win_rate', lang)}:</b> {win_rate:.1f}%\n"
-            f"✅ {t('profile.wins', lang)}: <b>{wins}</b> | ❌ {t('profile.losses', lang)}: <b>{losses}</b>\n\n"
+            f"🎯 <b>{translate('profile.games_played', telegram_id)}:</b> {total_games}\n"
+            f"📊 <b>{translate('profile.win_rate', telegram_id)}:</b> {win_rate:.1f}%\n"
+            f"✅ {translate('profile.wins', telegram_id)}: <b>{wins}</b> | ❌ {translate('profile.losses', telegram_id)}: <b>{losses}</b>\n\n"
             
-            f"🏅 <b>{t('profile.mvp', lang)}:</b> 123 {t('profile.times', lang)}\n"
-            f"📅 <b>{t('profile.on_project_since', lang)}:</b> {join_date.strftime('%d.%m.%Y')}",
+            f"🏅 <b>{translate('profile.mvp', telegram_id)}:</b> 123 {translate('profile.times', telegram_id)}\n"
+            f"📅 <b>{translate('profile.on_project_since', telegram_id)}:</b> {join_date.strftime('%d.%m.%Y')}",
             parse_mode="HTML",
             reply_markup=get_main_keyboard(),
         )
     else:
         await message.answer(
-            t('profile.not_found', lang),
+            translate('profile.not_found', telegram_id),
             reply_markup=get_start_keyboard()
         )
         
 @router.message(Command("stats"))
 async def stats_handler(message: Message):
     """Обработчик команды статистики | Stats command handler"""
-    lang = get_lang(message.from_user.id)
+    telegram_id = message.from_user.id
     
     await message.answer(
-        f"{t('stats.title', lang)}\n\n"
+        f"{translate('stats.title', telegram_id)}\n\n"
         
-        f"{t('stats.win_rate', lang)}: 58%\n"
+        f"{translate('stats.win_rate', telegram_id)}: 58%\n"
         "▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▱▱▱ 58%\n"
-        f"✅ {t('stats.wins', lang)}: <b>203</b> | ❌ {t('stats.losses', lang)}: <b>147</b>\n\n"
+        f"✅ {translate('stats.wins', telegram_id)}: <b>203</b> | ❌ {translate('stats.losses', telegram_id)}: <b>147</b>\n\n"
         
-        f"🏆 <b>{t('stats.best_map', lang)}:</b> Sandstone\n"
-        f"🎯 {t('stats.win_rate', lang)}: <b>67%</b> | ⚔️ {t('stats.kd', lang)}: <b>1.8</b>\n\n"
+        f"🏆 <b>{translate('stats.best_map', telegram_id)}:</b> Sandstone\n"
+        f"🎯 {translate('stats.win_rate', telegram_id)}: <b>67%</b> | ⚔️ {translate('stats.kd', telegram_id)}: <b>1.8</b>\n\n"
         
-        f"📊 <b>{t('stats.avg_per_game', lang)}:</b>\n"
-        f"🗡️ 18.5 {t('stats.kills', lang)} | 💀 12.8 {t('stats.deaths', lang)}\n"
-        f"🎯 45.3% {t('stats.headshots', lang)} | ⚡ 2.3 {t('stats.kdr', lang)}",
+        f"📊 <b>{translate('stats.avg_per_game', telegram_id)}:</b>\n"
+        f"🗡️ 18.5 {translate('stats.kills', telegram_id)} | 💀 12.8 {translate('stats.deaths', telegram_id)}\n"
+        f"🎯 45.3% {translate('stats.headshots', telegram_id)} | ⚡ 2.3 {translate('stats.kdr', telegram_id)}",
         parse_mode="HTML"
     )
 
 @router.message(Command("top"))
 async def top_handler(message: Message):
     """Обработчик команды топа | Top command handler"""
-    lang = get_lang(message.from_user.id)
+    telegram_id = message.from_user.id
     
     await message.answer(
-        f"{t('top.title', lang)}\n\n"
+        f"{translate('top.title', telegram_id)}\n\n"
         
         f"🥇 <b>1. GodLike_SO2</b>\n"
-        f"   ⭐ {t('top.elo', lang)}: <b>2450</b> | 📊 {t('top.win_rate', lang)}: <b>72%</b>\n"
-        f"   🎯 2450 {t('top.kills', lang)} | 🏅 47 {t('top.mvp', lang)}\n\n"
+        f"   ⭐ {translate('top.elo', telegram_id)}: <b>2450</b> | 📊 {translate('top.win_rate', telegram_id)}: <b>72%</b>\n"
+        f"   🎯 2450 {translate('top.kills', telegram_id)} | 🏅 47 {translate('top.mvp', telegram_id)}\n\n"
         
         f"🥈 <b>2. ProPlayer_Elite</b>\n"  
-        f"   ⭐ {t('top.elo', lang)}: <b>2380</b> | 📊 {t('top.win_rate', lang)}: <b>68%</b>\n"
-        f"   🎯 2180 {t('top.kills', lang)} | 🏅 42 {t('top.mvp', lang)}\n\n"
+        f"   ⭐ {translate('top.elo', telegram_id)}: <b>2380</b> | 📊 {translate('top.win_rate', telegram_id)}: <b>68%</b>\n"
+        f"   🎯 2180 {translate('top.kills', telegram_id)} | 🏅 42 {translate('top.mvp', telegram_id)}\n\n"
         
         f"🥉 <b>3. KillerInstinct</b>\n"
-        f"   ⭐ {t('top.elo', lang)}: <b>2340</b> | 📊 {t('top.win_rate', lang)}: <b>65%</b>\n"
-        f"   🎯 1950 {t('top.kills', lang)} | 🏅 38 {t('top.mvp', lang)}\n\n"
+        f"   ⭐ {translate('top.elo', telegram_id)}: <b>2340</b> | 📊 {translate('top.win_rate', telegram_id)}: <b>65%</b>\n"
+        f"   🎯 1950 {translate('top.kills', telegram_id)} | 🏅 38 {translate('top.mvp', telegram_id)}\n\n"
         
         f"▫️ <b>245. ProPlayer_SO2</b>\n"
-        f"   ⭐ {t('top.elo', lang)}: <b>1850</b> | 📊 {t('top.win_rate', lang)}: <b>58%</b>\n"
-        f"   🎯 1450 {t('top.kills', lang)} | 🏅 12 {t('top.mvp', lang)}",
+        f"   ⭐ {translate('top.elo', telegram_id)}: <b>1850</b> | 📊 {translate('top.win_rate', telegram_id)}: <b>58%</b>\n"
+        f"   🎯 1450 {translate('top.kills', telegram_id)} | 🏅 12 {translate('top.mvp', telegram_id)}",
         parse_mode="HTML"
     )
     
 @router.message(Command("history"))
 async def history_handler(message: Message):
     """Обработчик команды истории | History command handler"""
-    lang = get_lang(message.from_user.id)
+    telegram_id = message.from_user.id
     
     await message.answer(
-        f"{t('history.title', lang)}\n\n"
+        f"{translate('history.title', telegram_id)}\n\n"
         
-        f"🟢 <b>{t('history.win', lang)}</b> | 🗺️ Sandstone\n"
-        f"⚔️ {t('history.kd', lang)}: <b>1.8</b> | 🎯 18/10\n" 
-        f"⭐ +15 {t('history.elo', lang)} | 📅 15.12.2023 20:45\n\n"
+        f"🟢 <b>{translate('history.win', telegram_id)}</b> | 🗺️ Sandstone\n"
+        f"⚔️ {translate('history.kd', telegram_id)}: <b>1.8</b> | 🎯 18/10\n" 
+        f"⭐ +15 {translate('history.elo', telegram_id)} | 📅 15.12.2023 20:45\n\n"
         
-        f"🔴 <b>{t('history.loss', lang)}</b> | 🗺️ Downtown\n"
-        f"⚔️ {t('history.kd', lang)}: <b>0.9</b> | 🎯 9/10\n"
-        f"⭐ -12 {t('history.elo', lang)} | 📅 14.12.2023 19:30\n\n"
+        f"🔴 <b>{translate('history.loss', telegram_id)}</b> | 🗺️ Downtown\n"
+        f"⚔️ {translate('history.kd', telegram_id)}: <b>0.9</b> | 🎯 9/10\n"
+        f"⭐ -12 {translate('history.elo', telegram_id)} | 📅 14.12.2023 19:30\n\n"
         
-        f"🟢 <b>{t('history.win', lang)}</b> | 🗺️ Sandstone\n"
-        f"⚔️ {t('history.kd', lang)}: <b>2.1</b> | 🎯 21/10\n"
-        f"⭐ +18 {t('history.elo', lang)} | 📅 13.12.2023 22:15\n\n"
+        f"🟢 <b>{translate('history.win', telegram_id)}</b> | 🗺️ Sandstone\n"
+        f"⚔️ {translate('history.kd', telegram_id)}: <b>2.1</b> | 🎯 21/10\n"
+        f"⭐ +18 {translate('history.elo', telegram_id)} | 📅 13.12.2023 22:15\n\n"
         
-        f"🔵 <b>{t('history.draw', lang)}</b> | 🗺️ Factory\n"
-        f"⚔️ {t('history.kd', lang)}: <b>1.2</b> | 🎯 12/10\n"
-        f"⭐ +0 {t('history.elo', lang)} | 📅 12.12.2023 18:20",
+        f"🔵 <b>{translate('history.draw', telegram_id)}</b> | 🗺️ Factory\n"
+        f"⚔️ {translate('history.kd', telegram_id)}: <b>1.2</b> | 🎯 12/10\n"
+        f"⭐ +0 {translate('history.elo', telegram_id)} | 📅 12.12.2023 18:20",
         parse_mode="HTML"
     )
 
