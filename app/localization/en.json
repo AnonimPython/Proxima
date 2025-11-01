@@ -81,5 +81,15 @@
     "draw": "Draw",
     "kd": "K/D",
     "elo": "ELO"
+  },
+  "keyboard":{
+    "profile": "📊 Profile",
+    "find_lobby": "🎮 Find lobby",
+    "stats": "📈 Stats",
+    "top": "🏆 Raiting",
+    "history": "📅 History",
+    "help": "❓ Help",
+    "support": "📞 Support",
+    "register": "🚀 Register"
   }
 }
