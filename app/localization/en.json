@@ -91,5 +91,59 @@
     "help": "❓ Help",
     "support": "📞 Support",
     "register": "🚀 Register"
-  }
+  },
+  "moderator": {
+    "no_access": "❌ No access rights ❌",
+    "ban": {
+      "wrong_format": "❗️ <b>Wrong format</b>❗️\n\n<b>Usage:</b>\n<code>/mod_ban @username 24h reason</code>\n<code>/mod_ban 123456789 3d reason</code>\n\n<b>Maximum time:</b> 7 days\n<b>Time units:</b>\n• <code>m</code> - minutes (max 1440)\n• <code>h</code> - hours (max 168)\n• <code>d</code> - days (max 7)",
+      "wrong_time_format": "❗️<b>Wrong time format</b>❗️\n\nUse:\n• <code>30m</code> - 30 minutes\n• <code>24h</code> - 24 hours\n• <code>7d</code> - 7 days",
+      "time_limit_exceeded": "❌ Time limit exceeded for moderator\nMaximum: {max_minutes} minutes",
+      "cannot_ban": "❌ Cannot ban this user",
+      "success": "🔴 <b>TEMPORARY BAN (MODERATOR)</b>\n\n👤 <b>User:</b> {identifier}\n⏰ <b>Duration:</b> {time_display}\n📝 <b>Reason:</b> {reason}\n👮 <b>Banned by:</b> @{moderator_username}\n🕒 <b>Until:</b> {ban_until}"
+    },
+    "warn": {
+      "wrong_format": "❗️<b>Wrong format</b>❗️\n\n<b>Usage:</b>\n<code>/mod_warn @username reason</code>\n<code>/mod_warn 123456789 reason</code>",
+      "cannot_warn": "❌ Cannot warn this user",
+      "user_message": "⚠️ <b>YOU RECEIVED A WARNING</b>\n\n📝 <b>Reason:</b> {reason}\n👮 <b>Moderator:</b> @{moderator_username}\n🕒 <b>Time:</b> {time}\n\n<i>Repeated violations may result in a ban</i>",
+      "success": "⚠️ <b>WARNING ISSUED</b>\n\n👤 <b>User:</b> {identifier}\n📝 <b>Reason:</b> {reason}\n👮 <b>Issued by:</b> @{moderator_username}",
+      "failed_dm": "❌ <b>Failed to send DM notification (User blocked the bot)</b>"
+    },
+    "unban": {
+      "wrong_format": "❗️ <b>Wrong format</b>❗️\n\n<b>Usage:</b>\n<code>/mod_unban @username</code>\n<code>/mod_unban 123456789</code>",
+      "user_not_found": "❌ User {identifier} not found",
+      "no_bans": "User {identifier} has no active bans from you",
+      "success": "✅ <b>User unbanned</b>\n\n👤 <b>User:</b> {identifier}\n👮 <b>Unbanned by:</b> @{moderator_username}\n🕒 <b>Time:</b> {time}"
+    }
+  },
+  "user_banned": "🔴 <b>YOU ARE BANNED</b>\n\n⏰ <b>Duration:</b> {minutes} minutes\n📝 <b>Reason:</b> {reason}\n🕒 <b>Unban:</b> {ban_until}\n\nContact administration for questions",
+  "admin": {
+    "no_access": "❌ No access rights ❌",
+    "only_admins": "❌ For administrators only ❌",
+    "make_admin": {
+      "no_rights": "❌ You don't have rights to use this command ❌",
+      "success": "✅ <b>You became an administrator!</b>\n\nNow you have access to commands:\n• /admin_ban - Ban user\n• /permaban - Permanent ban\n• /unban - Unban user\n• /banlist - Banned users list\n• /banhistory - Ban history\n• /make_moderator - Make moderator",
+      "user_not_found": "❗️ User not found in database ❗️"
+    },
+    "make_moderator": {
+      "wrong_format": "❗️ <b>Wrong format</b> ❗️\n\n<b>Usage:</b>\n<code>/make_moderator @username</code>\n<code>/make_moderator 123456789</code>",
+      "success": "✅ <b>User became moderator</b>\n\n👤 <b>User:</b> {identifier}\n🎯 <b>New role:</b> Moderator\n👮 <b>Appointed by:</b> @{admin_username}\n\nUser can now use moderator commands"
+    },
+    "permaban": {
+      "wrong_format": "❗️ <b>Wrong format</b> ❗️\n\n<b>Usage:</b>\n<code>/permaban @username reason</code>\n<code>/permaban 123456789 reason</code>\n\n<b>Example:</b>\n<code>/permaban @username Cheating</code>\n<code>/permaban 123456789 Cheating</code>",
+      "cannot_ban": "❌ Cannot ban this user",
+      "success": "🔴 <b>PERMANENT BAN</b>\n\n👤 <b>User:</b> {identifier}\n📝 <b>Reason:</b> {reason}\n👮 <b>Banned by:</b> @{admin_username}\n🕒 <b>Type:</b> Permanent\n\n❗️User banned forever❗️"
+    },
+    "admin_ban": {
+      "wrong_format": "❗️ <b>Wrong format</b>❗️\n\n<b>Usage:</b>\n<code>/admin_ban @username 7d reason</code>\n<code>/admin_ban 123456789 30d reason</code>\n\n<b>Time units:</b>\n• <code>m</code> - minutes\n• <code>h</code> - hours\n• <code>d</code> - days",
+      "wrong_time_format": "❗️<b>Wrong time format</b>❗️\n\nUse:\n• <code>30m</code> - 30 minutes\n• <code>24h</code> - 24 hours\n• <code>7d</code> - 7 days",
+      "success": "🔴 <b>TEMPORARY BAN</b>\n\n👤 <b>User:</b> {identifier}\n⏰ <b>Duration:</b> {time_display}\n📝 <b>Reason:</b> {reason}\n👮 <b>Banned by:</b> @{admin_username}\n🕒 <b>Until:</b> {ban_until}"
+    },
+    "unban": {
+      "wrong_format": "❌<b>Wrong command format</b>❌",
+      "user_not_found": "❌ User @{username} not found",
+      "no_bans": "ℹ️ User @{username} has no active bans",
+      "success": "✅ <b>User unbanned</b>\n\n👤 <b>User:</b> @{username}\n👮 <b>Unbanned by:</b> @{admin_username}\n🕒 <b>Time:</b> {time}"
+    }
+  },
+  "user_permanently_banned": "🔴 <b>YOU ARE BANNED PERMANENTLY</b>\n\n📝 <b>Reason:</b> {reason}\n\nContact administration for questions"
 }
