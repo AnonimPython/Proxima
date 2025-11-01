@@ -234,32 +234,37 @@ async def history_handler(message: Message):
     )
 
 # Обработчики кнопок | Button handlers
-@router.message(F.text == "📊 Мой профиль")
+@router.message(F.text.in_(["📊 Мой профиль", "📊 Profile"]))
 async def profile_button_handler(message: Message):
     """Обработчик кнопки профиля | Profile button handler"""
     await profile_handler(message)
 
-@router.message(F.text == "🎮 Найти лобби")
+@router.message(F.text.in_(["🎮 Найти лобби", "🎮 Find lobby"]))
 async def lobby_button_handler(message: Message):
     """Обработчик кнопки поиска лобби | Lobby search button handler"""
     await lobby_handler(message)
 
-@router.message(F.text == "📈 Статистика")
+@router.message(F.text.in_(["📈 Статистика", "📈 Stats"]))
 async def stats_button_handler(message: Message):
     """Обработчик кнопки статистики | Stats button handler"""
     await stats_handler(message)
 
-@router.message(F.text == "🏆 Рейтинг")
+@router.message(F.text.in_(["🏆 Рейтинг", "🏆 Raiting"]))
 async def top_button_handler(message: Message):
     """Обработчик кнопки рейтинга | Top button handler"""
     await top_handler(message)
 
-@router.message(F.text == "📅 История")
+@router.message(F.text.in_([ "📅 История", "📅 History"]))
 async def history_button_handler(message: Message):
     """Обработчик кнопки истории | History button handler"""
     await history_handler(message)
 
-@router.message(F.text == "❓ Помощь")
+@router.message(F.text.in_(["❓ Помощь", "❓ Help"]))
 async def help_button_handler(message: Message):
     """Обработчик кнопки помощи | Help button handler"""
+    await support_button_handler(message)
+    
+@router.message(F.text.in_(["📞 Поддержка", "📞 Support"]))
+async def support_button_handler(message: Message):
+    """Обработчик кнопки поддержка | Support button handler"""
     await support_button_handler(message)
