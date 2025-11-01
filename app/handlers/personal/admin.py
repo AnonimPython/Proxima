@@ -14,6 +14,7 @@ import os
 from dotenv import load_dotenv
 
 from utils.access_checker import is_admin, find_user_by_identifier, can_ban_user
+from localization import translate
 
 load_dotenv()
 
@@ -29,8 +30,8 @@ async def ban_user(
         minutes: int,
     ):
     """
-    Банит пользователя и отправляет уведомление в ЛС
-    Bans user and sends notification to DM
+        Банит пользователя и отправляет уведомление в ЛС
+        Bans user and sends notification to DM
     """
     with Session(engine) as session:
         user = session.exec(select(UsersSchema).where(UsersSchema.telegram_id == user_id)).first()
@@ -52,37 +53,34 @@ async def ban_user(
             session.add(new_ban)
             session.commit()
             
-            # Отправляем сообщение забаненному игроку
+            # Отправляем сообщение забаненному игроку | Send message to banned player
             try:
                 if minutes > 0:
                     ban_until = unbanned_at.strftime('%d.%m.%Y %H:%M')
-                    ban_message = (
-                        f"🔴 <b>ВЫ ЗАБАНЕНЫ</b>\n\n"
-                        f"⏰ <b>Срок:</b> {minutes} минут\n"
-                        f"📝 <b>Причина:</b> {reason}\n"
-                        f"🕒 <b>Разбан:</b> {ban_until}\n\n"
-                        f"По вопросам обращайтесь к администрации"
+                    ban_message = translate(
+                        'user_banned', 
+                        user_id, 
+                        minutes=minutes, 
+                        reason=reason, 
+                        ban_until=ban_until
                     )
                 else:
-                    ban_message = (
-                        f"🔴 <b>ВЫ ЗАБАНЕНЫ НАВСЕГДА</b>\n\n"
-                        f"📝 <b>Причина:</b> {reason}\n\n"
-                        f"По вопросам обращайтесь к администрации"
-                    )
+                    ban_message = translate('user_permanently_banned', user_id, reason=reason)
                 await bot.send_message(chat_id=user_id, text=ban_message, parse_mode="HTML")
             except:
-                pass
+                pass  # Игрок заблокировал бота | User blocked the bot
+
 #! TEST
 @router.message(Command("make_me_admin"))
 async def make_me_admin(message: Message):
     """
         Команда для выдачи прав администратора
-        FOR TEST GIVE U ADMIN COMMANDS
+        Command to grant administrator rights
     """
     admin_id = os.getenv('ADMIN_TELEGRAM_ID')
     
     if str(message.from_user.id) != admin_id:
-        await message.answer("❌ У вас нет прав для использования этой команды ❌")
+        await message.answer(translate('admin.make_admin.no_rights', message.from_user.id))
         return
     
     with Session(engine) as session:
@@ -92,40 +90,24 @@ async def make_me_admin(message: Message):
         if user:
             user.role = "admin"
             session.commit()
-            await message.answer(
-                "✅ <b>Вы стали администратором!</b>\n\n"
-                "Теперь вам доступны команды:\n"
-                "• /admin_ban - Заблокировать пользователя\n"
-                "• /permaban - Перманентный бан\n"
-                "• /unban - Разблокировать пользователя\n"
-                "• /banlist - Список забаненных\n"
-                "• /banhistory - История банов\n"
-                "• /make_moderator - Сделать модератором",
-                parse_mode="HTML"
-            )
+            await message.answer(translate('admin.make_admin.success', message.from_user.id), parse_mode="HTML")
         else:
-            await message.answer("❗️ Пользователь не найден в базе данных ❗️")
+            await message.answer(translate('admin.make_admin.user_not_found', message.from_user.id))
 
 @router.message(Command("make_moderator"))
 async def make_moderator_command(message: Message):
     """
-    Сделать пользователя модератором
-    Admin can make user moderator 
+        Сделать пользователя модератором
+        Make user a moderator
     """
     
     if not is_admin(message.from_user.id):
-        await message.answer("❌ Только для администраторов ❌")
+        await message.answer(translate('admin.only_admins', message.from_user.id))
         return
     
     parts = message.text.split()
     if len(parts) < 2:
-        await message.answer(
-            "❗️ <b>Неправильный формат</b> ❗️\n\n"
-            "<b>Использование:</b>\n"
-            "<code>/make_moderator @username</code>\n"
-            "<code>/make_moderator 123456789</code>",
-            parse_mode="HTML"
-        )
+        await message.answer(translate('admin.make_moderator.wrong_format', message.from_user.id), parse_mode="HTML")
         return
     
     identifier = parts[1]
@@ -140,35 +122,29 @@ async def make_moderator_command(message: Message):
         user_to_promote.role = "moderator"
         session.commit()
     
+    admin_username = message.from_user.username or translate('admin.default_name', message.from_user.id)
+    
     await message.answer(
-        f"✅ <b>Пользователь стал модератором</b>\n\n"
-        f"👤 <b>Пользователь:</b> {identifier}\n"
-        f"🎯 <b>Новая роль:</b> Модератор\n"
-        f"👮 <b>Назначил:</b> @{message.from_user.username or 'администратор'}\n\n"
-        f"Теперь пользователь может использовать команды модератора",
+        translate(
+            'admin.make_moderator.success',
+            message.from_user.id,
+            identifier=identifier,
+            admin_username=admin_username
+        ),
         parse_mode="HTML"
     )
 
 @router.message(Command("permaban"))
 async def permaban_command(message: Message):
-    """Перманентный бан пользователя"""
+    """Перманентный бан пользователя | Permanent user ban"""
     
     if not is_admin(message.from_user.id):
-        await message.answer("❌ Нет прав доступа ❌")
+        await message.answer(translate('admin.no_access', message.from_user.id))
         return
     
     parts = message.text.split()
     if len(parts) < 3:
-        await message.answer(
-            "❗️ <b>Неправильный формат</b> ❗️\n\n"
-            "<b>Использование:</b>\n"
-            "<code>/permaban @username причина</code>\n"
-            "<code>/permaban 123456789 причина</code>\n\n"
-            "<b>Пример:</b>\n"
-            "<code>/permaban @username Читы</code>\n"
-            "<code>/permaban 123456789 Читы</code>",
-            parse_mode="HTML"
-        )
+        await message.answer(translate('admin.permaban.wrong_format', message.from_user.id), parse_mode="HTML")
         return
     
     identifier = parts[1]
@@ -179,12 +155,12 @@ async def permaban_command(message: Message):
         await message.answer(error)
         return
     
-    # Проверяем, может ли админ забанить этого пользователя
+    # Проверяем, может ли админ забанить этого пользователя | Check if admin can ban this user
     if not can_ban_user(message.from_user.id, user):
-        await message.answer("❌ Нельзя забанить этого пользователя")
+        await message.answer(translate('admin.permaban.cannot_ban', message.from_user.id))
         return
     
-    # Пермабан
+    # Пермабан | Permanent ban
     await ban_user(
         message.bot,
         user.telegram_id,
@@ -194,37 +170,30 @@ async def permaban_command(message: Message):
         0
     )
     
+    admin_username = message.from_user.username or translate('admin.default_name', message.from_user.id)
+    
     await message.answer(
-        f"🔴 <b>ПЕРМАНЕНТНЫЙ БАН</b>\n\n"
-        f"👤 <b>Пользователь:</b> {identifier}\n"
-        f"📝 <b>Причина:</b> {reason}\n"
-        f"👮 <b>Забанил:</b> @{message.from_user.username or 'администратор'}\n"
-        f"🕒 <b>Тип:</b> Перманентный\n\n"
-        f"❗️Пользователь забанен навсегда❗️",
+        translate(
+            'admin.permaban.success',
+            message.from_user.id,
+            identifier=identifier,
+            reason=reason,
+            admin_username=admin_username
+        ),
         parse_mode="HTML"
     )
 
 @router.message(Command("admin_ban"))
 async def admin_ban_command(message: Message):
-    """Временный бан (админ)"""
+    """Временный бан (админ) | Temporary ban (admin)"""
     
     if not is_admin(message.from_user.id):
-        await message.answer("❌ Нет прав доступа ❌")
+        await message.answer(translate('admin.no_access', message.from_user.id))
         return
     
     parts = message.text.split()
     if len(parts) < 4:
-        await message.answer(
-            "❗️ <b>Неправильный формат</b>❗️\n\n"
-            "<b>Использование:</b>\n"
-            "<code>/admin_ban @username 7d причина</code>\n"
-            "<code>/admin_ban 123456789 30d причина</code>\n\n"
-            "<b>Единицы времени:</b>\n"
-            "• <code>m</code> - минуты\n"
-            "• <code>h</code> - часы\n"
-            "• <code>d</code> - дни",
-            parse_mode="HTML"
-        )
+        await message.answer(translate('admin.admin_ban.wrong_format', message.from_user.id), parse_mode="HTML")
         return
     
     identifier = parts[1]
@@ -233,14 +202,7 @@ async def admin_ban_command(message: Message):
     
     time_match = re.match(r'^(\d+)([mhd])$', time_string)
     if not time_match:
-        await message.answer(
-            "❗️<b>Неправильный формат времени</b>❗️\n\n"
-            "Используйте:\n"
-            "• <code>30m</code> - 30 минут\n"
-            "• <code>24h</code> - 24 часа\n" 
-            "• <code>7d</code> - 7 дней",
-            parse_mode="HTML"
-        )
+        await message.answer(translate('admin.admin_ban.wrong_time_format', message.from_user.id), parse_mode="HTML")
         return
     
     amount = int(time_match.group(1))
@@ -261,9 +223,9 @@ async def admin_ban_command(message: Message):
         await message.answer(error)
         return
     
-    # Проверяем, может ли админ забанить этого пользователя
+    # Проверяем, может ли админ забанить этого пользователя | Check if admin can ban this user
     if not can_ban_user(message.from_user.id, user):
-        await message.answer("❌ Нельзя забанить этого пользователя")
+        await message.answer(translate('admin.permaban.cannot_ban', message.from_user.id))
         return
     
     await ban_user(
@@ -276,27 +238,34 @@ async def admin_ban_command(message: Message):
     )
     
     ban_until = datetime.now(moscow_tz) + timedelta(minutes=minutes)
+    admin_username = message.from_user.username or translate('admin.default_name', message.from_user.id)
     
     await message.answer(
-        f"🔴 <b>ВРЕМЕННЫЙ БАН</b>\n\n"
-        f"👤 <b>Пользователь:</b> {identifier}\n"
-        f"⏰ <b>Длительность:</b> {time_display}\n"
-        f"📝 <b>Причина:</b> {reason}\n"
-        f"👮 <b>Забанил:</b> @{message.from_user.username or 'администратор'}\n"
-        f"🕒 <b>До:</b> {ban_until.strftime('%d.%m.%Y %H:%M')}\n\n",
+        translate(
+            'admin.admin_ban.success',
+            message.from_user.id,
+            identifier=identifier,
+            time_display=time_display,
+            reason=reason,
+            admin_username=admin_username,
+            ban_until=ban_until.strftime('%d.%m.%Y %H:%M')
+        ),
         parse_mode="HTML"
     )
 
 # Остальные команды (unban, banlist, banhistory) остаются без изменений
+# Other commands (unban, banlist, banhistory) remain unchanged
 @router.message(Command("unban"))
 async def unban_command(message: Message):
+    """Разбан пользователя | Unban user"""
+    
     if not is_admin(message.from_user.id):
-        await message.answer("❌ У вас нет прав для использования этой команды ❌")
+        await message.answer(translate('admin.no_access', message.from_user.id))
         return
     
     parts = message.text.split()
     if len(parts) < 2:
-        await message.answer("❌<b>Неправильный формат команды</b>❌")
+        await message.answer(translate('admin.unban.wrong_format', message.from_user.id), parse_mode="HTML")
         return
     
     username = parts[1].replace('@', '')
@@ -304,7 +273,7 @@ async def unban_command(message: Message):
     with Session(engine) as session:
         user = session.exec(select(UsersSchema).where(UsersSchema.username == username)).first()
         if not user:
-            await message.answer(f"❌ Пользователь @{username} не найден")
+            await message.answer(translate('admin.unban.user_not_found', message.from_user.id, username=username))
             return
         
         unbanned_by_user = session.exec(select(UsersSchema).where(UsersSchema.telegram_id == message.from_user.id)).first()
@@ -314,7 +283,7 @@ async def unban_command(message: Message):
         )).all()
         
         if not active_bans:
-            await message.answer(f"ℹ️ У пользователя @{username} нет активных банов")
+            await message.answer(translate('admin.unban.no_bans', message.from_user.id, username=username))
             return
         
         for ban in active_bans:
@@ -325,12 +294,113 @@ async def unban_command(message: Message):
         
         session.commit()
         
+        admin_username = message.from_user.username or translate('admin.default_name', message.from_user.id)
+        current_time = datetime.now(moscow_tz).strftime('%d.%m.%Y %H:%M')
+        
         await message.answer(
-            f"✅ <b>Пользователь разбанен</b>\n\n"
-            f"👤 <b>Пользователь:</b> @{username}\n"
-            f"👮 <b>Разбанил:</b> @{message.from_user.username or 'администратор'}\n"
-            f"🕒 <b>Время:</b> {datetime.now(moscow_tz).strftime('%d.%m.%Y %H:%M')}",
+            translate(
+                'admin.unban.success',
+                message.from_user.id,
+                username=username,
+                admin_username=admin_username,
+                time=current_time
+            ),
             parse_mode="HTML"
         )
+        
+@router.message(Command("banlist"))
+async def banlist_command(message: Message):
+    """Показать список активных банов | Show active bans list"""
+    
+    if not is_admin(message.from_user.id):
+        await message.answer(translate('admin.no_access', message.from_user.id))
+        return
+    
+    with Session(engine) as session:
+        # Получаем активные баны с информацией о пользователях | Get active bans with user info
+        active_bans = session.exec(
+            select(UserBansSchema, UsersSchema)
+            .join(UsersSchema, UserBansSchema.user_id == UsersSchema.user_id)
+            .where(UserBansSchema.is_active == True)
+        ).all()
+        
+        if not active_bans:
+            await message.answer("📋 <b>Список активных банов пуст</b>\n\n", parse_mode="HTML")
+            return
+        
+        ban_list_text = "📋 <b>СПИСОК АКТИВНЫХ БАНОВ</b>\n\n"
+        
+        for ban, user in active_bans:
+            ban_time = ban.banned_at.strftime('%d.%m.%Y %H:%M')
+            ban_list_text += f"👤 {user.username or user.telegram_id}\n"
+            ban_list_text += f"⏰ {ban_time} | {ban.ban_type}\n"
+            ban_list_text += f"📝 {ban.reason}\n"
+            if ban.duration_minutes > 0:
+                unban_time = ban.unbanned_at.strftime('%d.%m.%Y %H:%M')
+                ban_list_text += f"🕒 До: {unban_time}\n"
+            else:
+                ban_list_text += f"🕒 Пермабан | Permanent\n"
+            ban_list_text += "─" * 30 + "\n"
+        
+        await message.answer(ban_list_text, parse_mode="HTML")
 
-# banlist и banhistory команды остаются без изменений
+@router.message(Command("banhistory"))
+async def banhistory_command(message: Message):
+    """Показать историю банов пользователя | Show user ban history"""
+    
+    if not is_admin(message.from_user.id):
+        await message.answer(translate('admin.no_access', message.from_user.id))
+        return
+    
+    parts = message.text.split()
+    if len(parts) < 2:
+        await message.answer(
+            "❗️ <b>Неправильный формат</b> ❗️\nWrong format\n\n"
+            "<b>Использование | Usage:</b>\n"
+            "<code>/banhistory @username</code>\n"
+            "<code>/banhistory 123456789</code>",
+            parse_mode="HTML"
+        )
+        return
+    
+    identifier = parts[1]
+    
+    user, error = find_user_by_identifier(identifier)
+    if error:
+        await message.answer(error)
+        return
+    
+    with Session(engine) as session:
+        # Получаем всю историю банов пользователя | Get all user ban history
+        ban_history = session.exec(
+            select(UserBansSchema)
+            .where(UserBansSchema.user_id == user.user_id)
+            .order_by(UserBansSchema.banned_at.desc())
+        ).all()
+        
+        if not ban_history:
+            await message.answer(
+                f"📋 <b>История банов пользователя {identifier} пуста</b>\n\n"
+                f"Ban history for user {identifier} is empty",
+                parse_mode="HTML"
+            )
+            return
+        
+        history_text = f"📋 <b>ИСТОРИЯ БАНОВ | BAN HISTORY</b>\n👤 <b>Пользователь | User:</b> {identifier}\n\n"
+        
+        for i, ban in enumerate(ban_history[:10], 1):  # Ограничиваем 10 последними банами
+            ban_time = ban.banned_at.strftime('%d.%m.%Y %H:%M')
+            status = "🔴 АКТИВЕН | ACTIVE" if ban.is_active else "✅ СНЯТ | REMOVED"
+            
+            history_text += f"{i}. {ban.ban_type}\n"
+            history_text += f"   ⏰ {ban_time} | {status}\n"
+            history_text += f"   📝 {ban.reason}\n"
+            if ban.unbanned_at_time:
+                unban_time = ban.unbanned_at_time.strftime('%d.%m.%Y %H:%M')
+                history_text += f"   ✅ Снят: {unban_time}\n"
+            history_text += "   " + "─" * 20 + "\n"
+        
+        if len(ban_history) > 10:
+            history_text += f"\n... и еще {len(ban_history) - 10} записей | and {len(ban_history) - 10} more records"
+        
+        await message.answer(history_text, parse_mode="HTML")

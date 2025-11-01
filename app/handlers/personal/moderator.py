@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 import re
 
 from utils.access_checker import is_moderator, find_user_by_identifier, can_ban_user
+from localization import translate
 
 router = Router()
 moscow_tz = ZoneInfo("Europe/Moscow")
@@ -24,7 +25,10 @@ async def ban_user(
         reason: str,
         minutes: int,
     ):
-    """Банит пользователя и отправляет уведомление в ЛС"""
+    """
+        Банит пользователя и отправляет уведомление в ЛС
+        Bans the user and sends a notification via PM.
+    """
     with Session(engine) as session:
         user = session.exec(select(UsersSchema).where(UsersSchema.telegram_id == user_id)).first()
         banned_by_user = session.exec(select(UsersSchema).where(UsersSchema.telegram_id == banned_by_id)).first()
@@ -47,12 +51,12 @@ async def ban_user(
             
             try:
                 ban_until = unbanned_at.strftime('%d.%m.%Y %H:%M')
-                ban_message = (
-                    f"🔴 <b>ВЫ ЗАБАНЕНЫ</b>\n\n"
-                    f"⏰ <b>Срок:</b> {minutes} минут\n"
-                    f"📝 <b>Причина:</b> {reason}\n"
-                    f"🕒 <b>Разбан:</b> {ban_until}\n\n"
-                    f"По вопросам обращайтесь к администрации"
+                ban_message = translate(
+                    'user_banned', 
+                    user_id, 
+                    minutes=minutes, 
+                    reason=reason, 
+                    ban_until=ban_until
                 )
                 await bot.send_message(chat_id=user_id, text=ban_message, parse_mode="HTML")
             except:
@@ -60,26 +64,18 @@ async def ban_user(
 
 @router.message(Command("mod_ban"))
 async def mod_ban_command(message: Message):
-    """Временный бан (модератор) - максимум 7 дней"""
+    """
+        Временный бан (модератор) - максимум 7 дней
+        Temporary ban (moderator) - max 7 days    
+    """
     
     if not is_moderator(message.from_user.id):
-        await message.answer("❌ Нет прав доступа ❌")
+        await message.answer(translate('moderator.no_access', message.from_user.id))
         return
     
     parts = message.text.split()
     if len(parts) < 4:
-        await message.answer(
-            "❗️ <b>Неправильный формат</b>❗️\n\n"
-            "<b>Использование:</b>\n"
-            "<code>/mod_ban @username 24h причина</code>\n"
-            "<code>/mod_ban 123456789 3d причина</code>\n\n"
-            "<b>Максимальное время:</b> 7 дней\n"
-            "<b>Единицы времени:</b>\n"
-            "• <code>m</code> - минуты (макс 1440)\n"
-            "• <code>h</code> - часы (макс 168)\n"
-            "• <code>d</code> - дни (макс 7)",
-            parse_mode="HTML"
-        )
+        await message.answer(translate('moderator.ban.wrong_format', message.from_user.id), parse_mode="HTML")
         return
     
     identifier = parts[1]
@@ -88,14 +84,7 @@ async def mod_ban_command(message: Message):
     
     time_match = re.match(r'^(\d+)([mhd])$', time_string)
     if not time_match:
-        await message.answer(
-            "❗️<b>Неправильный формат времени</b>❗️\n\n"
-            "Используйте:\n"
-            "• <code>30m</code> - 30 минут\n"
-            "• <code>24h</code> - 24 часа\n" 
-            "• <code>7d</code> - 7 дней",
-            parse_mode="HTML"
-        )
+        await message.answer(translate('moderator.ban.wrong_time_format', message.from_user.id), parse_mode="HTML")
         return
     
     amount = int(time_match.group(1))
@@ -104,19 +93,19 @@ async def mod_ban_command(message: Message):
     if unit == 'm':
         minutes = amount
         time_display = f"{amount}мин"
-        max_minutes = 1440  # 24 часа
+        max_minutes = 1440  # 24 часа | 24 hour
     elif unit == 'h':
         minutes = amount * 60
         time_display = f"{amount}ч"
-        max_minutes = 10080  # 7 дней
+        max_minutes = 10080  # 7 дней | 7 days
     elif unit == 'd':
         minutes = amount * 24 * 60
         time_display = f"{amount}дн"
-        max_minutes = 10080  # 7 дней
+        max_minutes = 10080  # 7 дней | 7 days
     
-    # Проверяем лимиты модератора
+    # Проверяем лимиты модератора | Checking moderator limits
     if minutes > max_minutes:
-        await message.answer(f"❌ Превышен лимит времени для модератора\nМаксимум: {max_minutes} минут")
+        await message.answer(translate('moderator.ban.time_limit_exceeded', message.from_user.id, max_minutes=max_minutes))
         return
     
     user, error = find_user_by_identifier(identifier)
@@ -125,8 +114,9 @@ async def mod_ban_command(message: Message):
         return
     
     # Проверяем, может ли модератор забанить этого пользователя
+    # Check if the moderator can ban this user
     if not can_ban_user(message.from_user.id, user):
-        await message.answer("❌ Нельзя забанить этого пользователя")
+        await message.answer(translate('moderator.ban.cannot_ban', message.from_user.id))
         return
     
     await ban_user(
@@ -139,14 +129,18 @@ async def mod_ban_command(message: Message):
     )
     
     ban_until = datetime.now(moscow_tz) + timedelta(minutes=minutes)
+    moderator_username = message.from_user.username or translate('moderator.default_name', message.from_user.id)
     
     await message.answer(
-        f"🔴 <b>ВРЕМЕННЫЙ БАН (МОДЕРАТОР)</b>\n\n"
-        f"👤 <b>Пользователь:</b> {identifier}\n"
-        f"⏰ <b>Длительность:</b> {time_display}\n"
-        f"📝 <b>Причина:</b> {reason}\n"
-        f"👮 <b>Забанил:</b> @{message.from_user.username or 'модератор'}\n"
-        f"🕒 <b>До:</b> {ban_until.strftime('%d.%m.%Y %H:%M')}\n\n",
+        translate(
+            'moderator.ban.success', 
+            message.from_user.id,
+            identifier=identifier,
+            time_display=time_display,
+            reason=reason,
+            moderator_username=moderator_username,
+            ban_until=ban_until.strftime('%d.%m.%Y %H:%M')
+        ),
         parse_mode="HTML"
     )
 
@@ -155,18 +149,12 @@ async def mod_warn_command(message: Message):
     """Предупреждение пользователю"""
     
     if not is_moderator(message.from_user.id):
-        await message.answer("❌ Нет прав доступа ❌")
+        await message.answer(translate('moderator.no_access', message.from_user.id))
         return
     
     parts = message.text.split()
     if len(parts) < 3:
-        await message.answer(
-            "❗️<b>Неправильный формат</b>❗️\n\n"
-            "<b>Использование:</b>\n"
-            "<code>/mod_warn @username причина</code>\n"
-            "<code>/mod_warn 123456789 причина</code>",
-            parse_mode="HTML"
-        )
+        await message.answer(translate('moderator.warn.wrong_format', message.from_user.id), parse_mode="HTML")
         return
     
     identifier = parts[1]
@@ -178,11 +166,12 @@ async def mod_warn_command(message: Message):
         return
     
     # Проверяем, может ли модератор выдать предупреждение
+    # Check if a moderator can issue a warning
     if not can_ban_user(message.from_user.id, user):
-        await message.answer("❌ Нельзя выдать предупреждение этому пользователю")
+        await message.answer(translate('moderator.warn.cannot_warn', message.from_user.id))
         return
     
-    # Создаем запись предупреждения в БД
+    # Создаем запись предупреждения в БД | create a warning message to DB
     with Session(engine) as session:
         moderator = session.exec(select(UsersSchema).where(UsersSchema.telegram_id == message.from_user.id)).first()
         
@@ -195,19 +184,22 @@ async def mod_warn_command(message: Message):
                 duration_minutes=0,
                 banned_at=datetime.now(moscow_tz),
                 unbanned_at=None,
-                is_active=False  # Предупреждение не активно как бан
+                is_active=False  # Предупреждение не активно как бан | send user a warning
             )
             session.add(new_warn)
             session.commit()
     
-    # Отправляем уведомление пользователю в ЛС
+    # Отправляем уведомление пользователю в ЛС | Sent notification to user
     try:
-        warn_message = (
-            f"⚠️ <b>ВЫ ПОЛУЧИЛИ ПРЕДУПРЕЖДЕНИЕ</b>\n\n"
-            f"📝 <b>Причина:</b> {reason}\n"
-            f"👮 <b>Выдал модератор:</b> @{message.from_user.username or 'модератор'}\n"
-            f"🕒 <b>Время:</b> {datetime.now(moscow_tz).strftime('%d.%m.%Y %H:%M')}\n\n"
-            f"<i>При повторных нарушениях возможна блокировка</i>"
+        moderator_username = message.from_user.username or translate('moderator.default_name', message.from_user.id)
+        current_time = datetime.now(moscow_tz).strftime('%d.%m.%Y %H:%M')
+        
+        warn_message = translate(
+            'moderator.warn.user_message',
+            user.telegram_id,
+            reason=reason,
+            moderator_username=moderator_username,
+            time=current_time
         )
         await message.bot.send_message(
             chat_id=user.telegram_id, 
@@ -215,24 +207,28 @@ async def mod_warn_command(message: Message):
             parse_mode="HTML"
         )
         
-        # Подтверждение модератору
+        # Подтверждение модератору | Confirm to moderator
         await message.answer(
-            f"⚠️ <b>ВЫДАНО ПРЕДУПРЕЖДЕНИЕ</b>\n\n"
-            f"👤 <b>Пользователь:</b> {identifier}\n"
-            f"📝 <b>Причина:</b> {reason}\n"
-            f"👮 <b>Выдал:</b> @{message.from_user.username or 'модератор'}\n\n",
-            # f"✅ Пользователь уведомлен в ЛС",
+            translate(
+                'moderator.warn.success',
+                message.from_user.id,
+                identifier=identifier,
+                reason=reason,
+                moderator_username=moderator_username
+            ),
             parse_mode="HTML"
         )
         
     except Exception as e:
         # Если не удалось отправить сообщение в ЛС | If massage dont send to user
         await message.answer(
-            f"⚠️ <b>ВЫДАНО ПРЕДУПРЕЖДЕНИЕ</b>\n\n"
-            f"👤 <b>Пользователь:</b> {identifier}\n"
-            f"📝 <b>Причина:</b> {reason}\n"
-            f"👮 <b>Выдал:</b> @{message.from_user.username or 'модератор'}\n\n"
-            f"❌ <b>Не удалось отправить уведомление в ЛС (Пользователь заблокировал бота)</b>\n",
+            translate(
+                'moderator.warn.success',
+                message.from_user.id,
+                identifier=identifier,
+                reason=reason,
+                moderator_username=moderator_username
+            ) + "\n\n" + translate('moderator.warn.failed_dm', message.from_user.id),
             parse_mode="HTML"
         )
 
@@ -241,18 +237,12 @@ async def mod_unban_command(message: Message):
     """Разбан пользователя (только свои баны)"""
     
     if not is_moderator(message.from_user.id):
-        await message.answer("❌ Нет прав доступа ❌")
+        await message.answer(translate('moderator.no_access', message.from_user.id))
         return
     
     parts = message.text.split()
     if len(parts) < 2:
-        await message.answer(
-            "❗️ <b>Неправильный формат</b>❗️\n\n"
-            "<b>Использование:</b>\n"
-            "<code>/mod_unban @username</code>\n"
-            "<code>/mod_unban 123456789</code>",
-            parse_mode="HTML"
-        )
+        await message.answer(translate('moderator.unban.wrong_format', message.from_user.id), parse_mode="HTML")
         return
     
     identifier = parts[1]
@@ -263,13 +253,14 @@ async def mod_unban_command(message: Message):
             # Пробуем найти по ID
             user = session.exec(select(UsersSchema).where(UsersSchema.telegram_id == int(identifier))).first()
             if not user:
-                await message.answer(f"❌ Пользователь {identifier} не найден")
+                await message.answer(translate('moderator.unban.user_not_found', message.from_user.id, identifier=identifier))
                 return
         
-        # Находим модератора
+        # Находим модератора | Find a moderator
         moderator = session.exec(select(UsersSchema).where(UsersSchema.telegram_id == message.from_user.id)).first()
         
         # Находим только те баны, которые выдал этот модератор
+        # We find only those bans issued by this moderator
         active_bans = session.exec(select(UserBansSchema).where(
             UserBansSchema.user_id == user.user_id,
             UserBansSchema.is_active == True,
@@ -277,7 +268,7 @@ async def mod_unban_command(message: Message):
         )).all()
         
         if not active_bans:
-            await message.answer(f"У пользователя {identifier} нет активных банов от вас")
+            await message.answer(translate('moderator.unban.no_bans', message.from_user.id, identifier=identifier))
             return
         
         for ban in active_bans:
@@ -287,10 +278,16 @@ async def mod_unban_command(message: Message):
         
         session.commit()
         
+        moderator_username = message.from_user.username or translate('moderator.default_name', message.from_user.id)
+        current_time = datetime.now(moscow_tz).strftime('%d.%m.%Y %H:%M')
+        
         await message.answer(
-            f"✅ <b>Пользователь разбанен</b>\n\n"
-            f"👤 <b>Пользователь:</b> {identifier}\n"
-            f"👮 <b>Разбанил:</b> @{message.from_user.username or 'модератор'}\n"
-            f"🕒 <b>Время:</b> {datetime.now(moscow_tz).strftime('%d.%m.%Y %H:%M')}",
+            translate(
+                'moderator.unban.success',
+                message.from_user.id,
+                identifier=identifier,
+                moderator_username=moderator_username,
+                time=current_time
+            ),
             parse_mode="HTML"
         )
