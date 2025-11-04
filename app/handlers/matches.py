@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from sqlmodel import Session, select
 from database.models import engine, UsersSchema, GameProfilesSchema, MatchesSchema, FoundMatchSchema, UserBansSchema
+from localization import translate
 
 router = Router()
 moscow_tz = ZoneInfo("Europe/Moscow")
@@ -147,7 +148,10 @@ async def update_lobby_messages(
     
     # Создаем клавиатуру с кнопкой Выйти
     cancel_builder = InlineKeyboardBuilder()
-    cancel_builder.button(text="❌ Выйти из лобби", callback_data=f"leave_lobby_{lobby_number}")
+    cancel_builder.button(
+        text=translate('buttons.leave_lobby', 0),  # 0 для системных сообщений
+        callback_data=f"leave_lobby_{lobby_number}"
+    )
     
     # СОЗДАЕМ ТЕКСТ СООБЩЕНИЯ
     # CREATE MESSAGE TEXT
@@ -155,22 +159,22 @@ async def update_lobby_messages(
         # Текст для заполненного лобби
         # Text for full lobby
         message_text = (
-            f"🎯 <b>Lobby {lobby_number} заполнено!</b>\n\n"
-            f"👥 <b>Игроки в лобби (10/10):</b>\n"
+            f"{translate('matches.lobby_full.title', 0, lobby_number=lobby_number)}\n\n"
+            f"{translate('matches.lobby_full.players_full', 0)}\n"
             + "\n".join([f"• {player}" for player in lobby_data['players']]) +
-            f"\n\n👑 <b>ВЫБРАНЫ 2 КАПИТАНА:</b>\n"
+            f"\n\n{translate('matches.lobby_full.captains_selected', 0)}\n"
             f"• {captain_nicknames[0]} (Команда А)\n"
             f"• {captain_nicknames[1]} (Команда Б)\n\n"
-            f"<i>Начинаем выбор карт...</i>"
+            f"{translate('matches.lobby_full.map_selection', 0)}"
         )
     else:
         # Текст для лобби в ожидании
         # Text for waiting lobby
         message_text = (
-            f"🎯 <b>Lobby {lobby_number} выбрано</b>\n\n"
-            f"👥 <b>Игроки в лобби ({current_players}/10):</b>\n"
+            f"{translate('matches.lobby_waiting.selected', 0, lobby_number=lobby_number)}\n\n"
+            f"{translate('matches.lobby_waiting.players_count', 0, current_players=current_players)}\n"
             + "\n".join([f"• {player}" for player in lobby_data['players']]) +
-            f"\n\n🕐 Ожидание игроков..."
+            f"\n\n{translate('matches.lobby_waiting.waiting', 0)}"
         )
     
     # ОБНОВЛЯЕМ СООБЩЕНИЯ У КАЖДОГО ИГРОКА
@@ -264,8 +268,7 @@ async def lobby_handler(message: Message):
                 await update_lobby_messages(message.bot, user_current_lobby)
         
         await message.answer(
-            "⚠️ <b>Вы были исключены из предыдущего лобби</b>\n\n"
-            f"Вы вышли из Lobby {user_current_lobby}, так как повторно использовали команду /lobby",
+            translate('matches.already_in_lobby', user_id, lobby_number=user_current_lobby),
             parse_mode="HTML"
         )
     
@@ -273,9 +276,7 @@ async def lobby_handler(message: Message):
     # check ban user or not
     if is_user_banned(user_id):
         await message.answer(
-            "🚫 <b>Вы забанены!</b>\n\n"
-            "Вы не можете заходить в лобби до снятия бана\n"
-            "Используйте /profile для проверки статуса",
+            translate('matches.banned', user_id),
             parse_mode="HTML"
         )
         return
@@ -317,21 +318,21 @@ async def lobby_handler(message: Message):
     
     # Описания лобби
     lobby_descriptions = {
-        1: "Ранговый матч",
-        2: "Ранговый матч",
-        3: "Ранговый матч",
-        4: "Ранговый матч",
+        1: translate('matches.lobby_list.ranked_match', user_id),
+        2: translate('matches.lobby_list.ranked_match', user_id),
+        3: translate('matches.lobby_list.ranked_match', user_id),
+        4: translate('matches.lobby_list.ranked_match', user_id),
     }
     
-    lobby_text = "🏟️ <b>ДОСТУПНЫЕ ЛОББИ</b>\n\n"
+    lobby_text = f"{translate('matches.lobby_list.title', user_id)}\n\n"
     
     for lobby_num in range(1, 5):
         count = get_lobby_player_count(str(lobby_num))
-        status = "🔒 ЗАПОЛНЕНО" if count >= 10 else "🟢 ОТКРЫТО"
+        status = translate('matches.lobby_list.full', user_id) if count >= 10 else translate('matches.lobby_list.open', user_id)
         lobby_text += f"🎯 <b>Lobby {lobby_num}</b> • {lobby_descriptions[lobby_num]} • {status}\n"
-        lobby_text += f"👥 {count}/10 реальных игроков\n\n"
+        lobby_text += f"👥 {count}/10 {translate('matches.lobby_list.players', user_id)}\n\n"
     
-    lobby_text += "<i>Выберите лобби для присоединения</i>"
+    lobby_text += translate('matches.lobby_list.description', user_id)
     
     await message.answer(
         lobby_text,
@@ -345,7 +346,7 @@ async def handle_lobby_full(callback: CallbackQuery):
         Обработчик заблокированных лобби
         Blocked lobby handler
     """
-    await callback.answer("❌ Это лобби заполнено! Выберите другое.", show_alert=True)
+    await callback.answer(translate('matches.lobby_is_full', callback.from_user.id), show_alert=True)
 
 @router.callback_query(F.data.startswith("join_lobby_"))
 async def handle_lobby_join(callback: CallbackQuery, state: FSMContext):
@@ -356,7 +357,7 @@ async def handle_lobby_join(callback: CallbackQuery, state: FSMContext):
     
     # Проверяем бан
     if is_user_banned(user_id):
-        await callback.answer("🚫 Вы забанены! Бан истечет через 1 минуту", show_alert=True)
+        await callback.answer(translate('matches.banned_alert', user_id), show_alert=True)
         return
     
     await callback.message.delete()
@@ -371,7 +372,7 @@ async def handle_lobby_join(callback: CallbackQuery, state: FSMContext):
             user_profile = session.exec(profile_stmt).first()
             current_user_nickname = user_profile.nickname if user_profile else user.first_name
         else:
-            current_user_nickname = callback.from_user.first_name or "Игрок"
+            current_user_nickname = callback.from_user.first_name or translate('generic.player', user_id)
 
     # Инициализируем лобби если его нет
     # Initialize lobby if it doesn't exist
@@ -390,13 +391,13 @@ async def handle_lobby_join(callback: CallbackQuery, state: FSMContext):
     # Проверяем, не заполнено ли лобби
     # Check if the lobby is full
     if len(lobby_data['players']) >= 10:
-        await callback.message.answer("❌ Лобби заполнено! Выберите другое.")
+        await callback.message.answer(translate('matches.lobby_join_error', user_id))
         return
     
     # Проверяем, не в лобби ли уже пользователь
     # Check if the user is already in the lobby
     if user_id in lobby_data['player_ids']:
-        await callback.message.answer("❌ Вы уже в этом лобби!")
+        await callback.message.answer(translate('matches.lobby_already_joined', user_id))
         return
     
     # Добавляем пользователя в лобби
@@ -412,14 +413,17 @@ async def handle_lobby_join(callback: CallbackQuery, state: FSMContext):
     current_players = len(lobby_data['players'])
     
     cancel_builder = InlineKeyboardBuilder()
-    cancel_builder.button(text="❌ Выйти из лобби", callback_data=f"leave_lobby_{lobby_number}")
+    cancel_builder.button(
+        text=translate('buttons.leave_lobby', user_id),
+        callback_data=f"leave_lobby_{lobby_number}"
+    )
     
     lobby_message = await callback.message.answer(
-        f"🎯 <b>Lobby {lobby_number} выбрано</b>\n\n"
-        f"👥 <b>Игроки в лобби ({current_players}/10):</b>\n"
+        f"{translate('matches.lobby_waiting.selected', user_id, lobby_number=lobby_number)}\n\n"
+        f"{translate('matches.lobby_waiting.players_count', user_id, current_players=current_players)}\n"
         + "\n".join([f"• {player}" for player in lobby_data['players']]) +
-        f"\n\n✅ <b>Вы присоединились как:</b> {current_user_nickname}\n"
-        f"🕐 Ожидание игроков...",
+        f"\n\n{translate('matches.lobby_waiting.joined_as', user_id, nickname=current_user_nickname)}\n"
+        f"{translate('matches.lobby_waiting.waiting', user_id)}",
         reply_markup=cancel_builder.as_markup(),
         parse_mode="HTML"
     )
@@ -451,7 +455,7 @@ async def handle_lobby_join(callback: CallbackQuery, state: FSMContext):
             if captain_id in lobby_data['player_profiles']:
                 captain_nicknames.append(lobby_data['player_profiles'][captain_id].nickname)
             else:
-                captain_nicknames.append(f"Игрок {captain_id}")
+                captain_nicknames.append(f"{translate('generic.player', user_id)} {captain_id}")
         
         # Уведомляем о выборе капитанов ВСЕХ игроков
         await update_lobby_messages(callback.bot, lobby_number, is_full=True, captain_nicknames=captain_nicknames)
@@ -463,13 +467,13 @@ async def handle_lobby_join(callback: CallbackQuery, state: FSMContext):
                 message_obj = await callback.bot.edit_message_text(
                     chat_id=first_message['chat_id'],
                     message_id=first_message['message_id'],
-                    text=f"🎯 <b>Lobby {lobby_number} заполнено!</b>\n\n"
-                         f"👥 <b>Игроки в лобби (10/10):</b>\n"
+                    text=f"{translate('matches.lobby_full.title', user_id, lobby_number=lobby_number)}\n\n"
+                         f"{translate('matches.lobby_full.players_full', user_id)}\n"
                          + "\n".join([f"• {player}" for player in lobby_data['players']]) +
-                         f"\n\n👑 <b>ВЫБРАНЫ 2 КАПИТАНА:</b>\n"
+                         f"\n\n{translate('matches.lobby_full.captains_selected', user_id)}\n"
                          f"• {captain_nicknames[0]} (Команда А)\n"
                          f"• {captain_nicknames[1]} (Команда Б)\n\n"
-                         f"<i>Начинаем выбор карт...</i>",
+                         f"{translate('matches.lobby_full.map_selection', user_id)}",
                     parse_mode="HTML"
                 )
                 await start_map_selection(message_obj, lobby_number)
@@ -527,10 +531,16 @@ async def show_map_selection_interface(message: Message, lobby_number: str):
     # Добавляем кнопки для каждой доступной карты
     # Add buttons for each available map
     for map_name in selection_data['available_maps']:
-        builder.button(text=f"🗺️ {map_name}", callback_data=f"ban_map_{lobby_number}_{map_name}")
+        builder.button(
+            text=translate('buttons.ban_map', 0, map_name=map_name),
+            callback_data=f"ban_map_{lobby_number}_{map_name}"
+        )
     
     
-    builder.button(text="❌ Выйти", callback_data=f"leave_lobby_{lobby_number}")
+    builder.button(
+        text=translate('buttons.leave_lobby', 0),
+        callback_data=f"leave_lobby_{lobby_number}"
+    )
     builder.adjust(2)
     
     # Создаем словарь с именами капитанов
@@ -544,22 +554,22 @@ async def show_map_selection_interface(message: Message, lobby_number: str):
         # Иначе создаем generic имя #! сделать проверку на регистрацию перед тем как зайти в лобби
         # Otherwise create generic name
         else:
-            captain_names[captain_id] = f"Игрок {captain_id}"
+            captain_names[captain_id] = f"{translate('generic.player', 0)} {captain_id}"
     
     # Определяем ID и имя текущего капитана
     # Determine current captain ID and name
     current_captain_id = selection_data['captains'][selection_data['current_turn']]
-    current_captain_name = captain_names.get(current_captain_id, "Капитан")
+    current_captain_name = captain_names.get(current_captain_id, translate('generic.captain', 0))
     
     status_text = (
-        f"🏆 <b>Выбор карт - Лобби {lobby_number}</b>\n\n"
-        f"👑 <b>Капитаны:</b>\n"
+        f"{translate('matches.map_selection.title', 0, lobby_number=lobby_number)}\n\n"
+        f"{translate('matches.map_selection.captains', 0)}\n"
         f"• Команда А: {captain_names[selection_data['captains'][0]]}\n"
         f"• Команда Б: {captain_names[selection_data['captains'][1]]}\n\n"
-        f"🎯 <b>Сейчас выбирает:</b> {current_captain_name}\n"
-        f"📋 <b>Доступные карты:</b> {', '.join(selection_data['available_maps'])}\n"
-        f"🚫 <b>Исключенные карты:</b> {', '.join(selection_data['banned_maps']) or 'нет'}\n\n"
-        f"<i>Капитаны по очереди исключают карты</i>"
+        f"{translate('matches.map_selection.current_turn', 0, captain_name=current_captain_name)}\n"
+        f"{translate('matches.map_selection.available_maps', 0, maps=', '.join(selection_data['available_maps']))}\n"
+        f"{translate('matches.map_selection.banned_maps', 0, maps=', '.join(selection_data['banned_maps']) or translate('matches.map_selection.no_banned', 0))}\n\n"
+        f"{translate('matches.map_selection.instruction', 0)}"
     )
     # Пытаемся отредактировать сообщение с новым интерфейсом
     # Try to edit message with new interface
@@ -589,7 +599,7 @@ async def handle_map_ban(callback: CallbackQuery):
     # Проверяем существование данных о лобби
     # Check if data exists about lobby
     if not selection_data:
-        await callback.answer("❌ Данные лобби не найдены!")
+        await callback.answer(translate('matches.lobby_data_not_found', user_id))
         return
     
     # Получаем ID текущего капитана
@@ -599,7 +609,7 @@ async def handle_map_ban(callback: CallbackQuery):
     # Проверяем, что действие совершает текущий капитан
     # Verify that action is performed by current captain
     if user_id != current_captain_id:
-        await callback.answer("❌ Сейчас не ваша очередь выбирать!")
+        await callback.answer(translate('matches.not_your_turn', user_id))
         return
     
     # Если карта доступна для исключения
@@ -610,7 +620,7 @@ async def handle_map_ban(callback: CallbackQuery):
         selection_data['available_maps'].remove(map_name)
         selection_data['banned_maps'].append(map_name)
         
-        await callback.answer(f"✅ Карта {map_name} исключена!")
+        await callback.answer(translate('matches.map_banned', user_id, map_name=map_name))
         
         # Переключаем очередь на другого капитана (0->1 или 1->0)
         # Switch turn to other captain (0->1 or 1->0)
@@ -649,17 +659,14 @@ async def handle_leave_lobby(callback: CallbackQuery):
         ban_user(user_id, "lobby_leave", "Выход из заполненного лобби")
         
         await callback.message.edit_text(
-            "🚫 <b>Вы получили бан за выход из заполненного лобби на 1 минуту</b>\n\n"
-            "Причина: Выход из лобби после его заполнения\n"
-            "Вы не сможете заходить в лобби до снятия бана",
+            translate('matches.leave_banned', user_id),
             parse_mode="HTML"
         )
     else:
         # Иначе просто уведомляем о выходе
         # Otherwise just notify about leaving
         await callback.message.edit_text(
-            "❌ <b>Вы покинули лобби</b>\n\n"
-            "Используйте /lobby чтобы присоединиться к другому лобби",
+            translate('matches.leave_normal', user_id),
             parse_mode="HTML"
         )
         
@@ -715,7 +722,7 @@ async def finish_map_selection(message: Message, lobby_number: str, final_map: s
     team_b_players = real_players[5:10] # Следующие 5 игроков | Next 5 players
     
     captain_names = {}
-    host_game_id = "Не найден"  # ID игры хоста | Host game ID
+    host_game_id = translate('generic.host_not_found', 0)  # ID игры хоста | Host game ID
 
     with Session(engine) as session:
         # Собираем информацию о капитанах
@@ -744,7 +751,7 @@ async def finish_map_selection(message: Message, lobby_number: str, final_map: s
                     else:
                         captain_names[captain_id] = user.first_name
                 else:
-                    captain_names[captain_id] = f"Игрок {captain_id}"
+                    captain_names[captain_id] = f"{translate('generic.player', 0)} {captain_id}"
         
         # Генерируем уникальный ID лобби из текущего времени
         # Generate unique lobby ID from current time
@@ -778,15 +785,15 @@ async def finish_map_selection(message: Message, lobby_number: str, final_map: s
         session.commit()
     
     final_text = (
-        f"🎮 <b>ИГРА СОЗДАНА</b>\n\n"
-        f"🔢 <b>Номер игры:</b> #{match_id}\n"
-        f"🎯 <b>Карта:</b> {final_map}\n"
-        f"👤 <b>Хост:</b> {host_game_id}\n"
-        f"👑 <b>Капитаны:</b> {captain_names[lobby_data['captains'][0]]} (А) vs {captain_names[lobby_data['captains'][1]]} (Б)\n"
-        f"🏠 <b>Lobby ID:</b> {lobby_id}\n\n"
-        f"🔵 <b>Команда А:</b>\n" + "\n".join([f"  • {player}" for player in team_a_players]) + f"\n\n"
-        f"🔴 <b>Команда Б:</b>\n" + "\n".join([f"  • {player}" for player in team_b_players]) + f"\n\n"
-        f"⚡ <b>Удачи в игре!</b>"
+        f"{translate('matches.game_created.title', 0)}\n\n"
+        f"{translate('matches.game_created.game_number', 0, match_id=match_id)}\n"
+        f"{translate('matches.game_created.map', 0, map_name=final_map)}\n"
+        f"{translate('matches.game_created.host', 0, host_id=host_game_id)}\n"
+        f"{translate('matches.game_created.captains', 0, captain_a=captain_names[lobby_data['captains'][0]], captain_b=captain_names[lobby_data['captains'][1]])}\n"
+        f"{translate('matches.game_created.lobby_id', 0, lobby_id=lobby_id)}\n\n"
+        f"{translate('matches.game_created.team_ct', 0)}\n" + "\n".join([f"  • {player}" for player in team_a_players]) + f"\n\n"
+        f"{translate('matches.game_created.team_t', 0)}\n" + "\n".join([f"  • {player}" for player in team_b_players]) + f"\n\n"
+        f"{translate('matches.game_created.good_luck', 0)}"
     )
     
     # Отправляем финальное сообщение всем игрокам в лобби
