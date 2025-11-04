@@ -188,10 +188,7 @@ USDT (TRC20) - ``TC4Qi3UKrb6YFkeimHC5wCDBB37ZMH5TYi``
 BTC - ``bc1q26zdaa9uzudperm2m7e3qr04l5rackm6cee7xk``
 
 ## 📝 Русская документация
-
-```
 [Русская документация](https://github.com/AnonimPython/Proxima/blob/main/README-RU.md)
-```
 
 ## 📄 License
 
