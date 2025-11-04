@@ -145,5 +145,68 @@
       "success": "✅ <b>User unbanned</b>\n\n👤 <b>User:</b> @{username}\n👮 <b>Unbanned by:</b> @{admin_username}\n🕒 <b>Time:</b> {time}"
     }
   },
-  "user_permanently_banned": "🔴 <b>YOU ARE BANNED PERMANENTLY</b>\n\n📝 <b>Reason:</b> {reason}\n\nContact administration for questions"
+  "user_permanently_banned": "🔴 <b>YOU ARE BANNED PERMANENTLY</b>\n\n📝 <b>Reason:</b> {reason}\n\nContact administration for questions",
+  "matches": {
+    "already_in_lobby": "⚠️ <b>You were removed from previous lobby</b>\n\nYou left Lobby {lobby_number} because you reused /lobby command",
+    "banned": "🚫 <b>You are banned!</b>\n\nYou cannot join lobbies until ban is lifted\nUse /profile to check status",
+    "lobby_is_full": "❌ This lobby is full! Choose another one.",
+    "banned_alert": "🚫 You are banned! Ban expires in 1 minute",
+    "lobby_already_joined": "❌ You are already in this lobby!",
+    "lobby_join_error": "❌ Lobby is full! Choose another one.",
+    "leave_banned": "🚫 <b>You received a 1-minute ban for leaving a full lobby</b>\n\nReason: Leaving lobby after it was filled\nYou won't be able to join lobbies until ban is lifted",
+    "leave_normal": "❌ <b>You left the lobby</b>\n\nUse /lobby to join another lobby",
+    "lobby_data_not_found": "❌ Lobby data not found!",
+    "not_your_turn": "❌ It's not your turn to choose!",
+    "map_banned": "✅ Map {map_name} banned!",
+    "lobby_list": {
+      "title": "🏟️ <b>AVAILABLE LOBBIES</b>",
+      "description": "<i>Choose a lobby to join</i>",
+      "full": "🔒 FULL",
+      "open": "🟢 OPEN",
+      "players": "real players",
+      "ranked_match": "Ranked match"
+    },
+    "lobby_waiting": {
+      "selected": "🎯 <b>Lobby {lobby_number} selected</b>",
+      "players_count": "👥 <b>Players in lobby ({current_players}/10):</b>",
+      "joined_as": "✅ <b>You joined as:</b> {nickname}",
+      "waiting": "🕐 Waiting for players..."
+    },
+    "lobby_full": {
+      "title": "🎯 <b>Lobby {lobby_number} is full!</b>",
+      "players_full": "👥 <b>Players in lobby (10/10):</b>",
+      "captains_selected": "👑 <b>2 CAPTAINS SELECTED:</b>",
+      "map_selection": "<i>Starting map selection...</i>"
+    },
+    "map_selection": {
+      "title": "🏆 <b>Map Selection - Lobby {lobby_number}</b>",
+      "captains": "👑 <b>Captains:</b>",
+      "current_turn": "🎯 <b>Currently choosing:</b> {captain_name}",
+      "available_maps": "📋 <b>Available maps:</b> {maps}",
+      "banned_maps": "🚫 <b>Banned maps:</b> {maps}",
+      "no_banned": "none",
+      "instruction": "<i>Captains take turns banning maps</i>"
+    },
+    "game_created": {
+      "title": "🎮 <b>GAME CREATED</b>",
+      "game_number": "🔢 <b>Game number:</b> #{match_id}",
+      "map": "🎯 <b>Map:</b> {map_name}",
+      "host": "👤 <b>Host:</b> {host_id}",
+      "captains": "👑 <b>Captains:</b> {captain_a} (CT) vs {captain_b} (T)",
+      "lobby_id": "🏠 <b>Lobby ID:</b> {lobby_id}",
+      "team_ct": "🔵 <b>Team CT:</b>",
+      "team_t": "🔴 <b>Team T:</b>",
+      "good_luck": "⚡ <b>Good luck in the game!</b>"
+    }
+  },
+  "buttons": {
+    "leave_lobby": "❌ Leave lobby",
+    "ban_map": "🗺️ {map_name}"
+  },
+  "generic": {
+    "player": "Player",
+    "captain": "Captain",
+    "host_not_found": "Not found"
+  }
+
 }
