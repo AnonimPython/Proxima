@@ -7,14 +7,14 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from datetime import datetime, timedelta
 from sqlmodel import Session, select
-from database.models import engine, UsersSchema, UserBansSchema
+from app.database.models import engine, UsersSchema, UserBansSchema
 from zoneinfo import ZoneInfo
 import re
 import os
 from dotenv import load_dotenv
 
-from utils.access_checker import is_admin, find_user_by_identifier, can_ban_user
-from localization import translate
+from app.utils.access_checker import is_admin, find_user_by_identifier, can_ban_user
+from app.localization import translate
 
 load_dotenv()
 
@@ -253,8 +253,6 @@ async def admin_ban_command(message: Message):
         parse_mode="HTML"
     )
 
-# Остальные команды (unban, banlist, banhistory) остаются без изменений
-# Other commands (unban, banlist, banhistory) remain unchanged
 @router.message(Command("unban"))
 async def unban_command(message: Message):
     """Разбан пользователя | Unban user"""
@@ -325,10 +323,10 @@ async def banlist_command(message: Message):
         ).all()
         
         if not active_bans:
-            await message.answer("📋 <b>Список активных банов пуст</b>\n\n", parse_mode="HTML")
+            await message.answer(translate('admin.banlist.empty', message.from_user.id), parse_mode="HTML")
             return
         
-        ban_list_text = "📋 <b>СПИСОК АКТИВНЫХ БАНОВ</b>\n\n"
+        ban_list_text = translate('admin.banlist.title', message.from_user.id)
         
         for ban, user in active_bans:
             ban_time = ban.banned_at.strftime('%d.%m.%Y %H:%M')
@@ -337,9 +335,9 @@ async def banlist_command(message: Message):
             ban_list_text += f"📝 {ban.reason}\n"
             if ban.duration_minutes > 0:
                 unban_time = ban.unbanned_at.strftime('%d.%m.%Y %H:%M')
-                ban_list_text += f"🕒 До: {unban_time}\n"
+                ban_list_text += translate('admin.banlist.until', message.from_user.id, time=unban_time) + "\n"
             else:
-                ban_list_text += f"🕒 Пермабан | Permanent\n"
+                ban_list_text += translate('admin.banlist.permanent', message.from_user.id) + "\n"
             ban_list_text += "─" * 30 + "\n"
         
         await message.answer(ban_list_text, parse_mode="HTML")
@@ -355,10 +353,7 @@ async def banhistory_command(message: Message):
     parts = message.text.split()
     if len(parts) < 2:
         await message.answer(
-            "❗️ <b>Неправильный формат</b> ❗️\nWrong format\n\n"
-            "<b>Использование | Usage:</b>\n"
-            "<code>/banhistory @username</code>\n"
-            "<code>/banhistory 123456789</code>",
+            translate('admin.banhistory.wrong_format', message.from_user.id),
             parse_mode="HTML"
         )
         return
@@ -380,27 +375,26 @@ async def banhistory_command(message: Message):
         
         if not ban_history:
             await message.answer(
-                f"📋 <b>История банов пользователя {identifier} пуста</b>\n\n"
-                f"Ban history for user {identifier} is empty",
+                translate('admin.banhistory.empty', message.from_user.id, identifier=identifier),
                 parse_mode="HTML"
             )
             return
         
-        history_text = f"📋 <b>ИСТОРИЯ БАНОВ | BAN HISTORY</b>\n👤 <b>Пользователь | User:</b> {identifier}\n\n"
+        history_text = translate('admin.banhistory.title', message.from_user.id, identifier=identifier)
         
-        for i, ban in enumerate(ban_history[:10], 1):  # Ограничиваем 10 последними банами
+        for i, ban in enumerate(ban_history[:10], 1):  # Ограничиваем 10 последними банами | can see only last 10 ban users
             ban_time = ban.banned_at.strftime('%d.%m.%Y %H:%M')
-            status = "🔴 АКТИВЕН | ACTIVE" if ban.is_active else "✅ СНЯТ | REMOVED"
+            status = translate('admin.banhistory.active', message.from_user.id) if ban.is_active else translate('admin.banhistory.removed', message.from_user.id)
             
             history_text += f"{i}. {ban.ban_type}\n"
             history_text += f"   ⏰ {ban_time} | {status}\n"
             history_text += f"   📝 {ban.reason}\n"
             if ban.unbanned_at_time:
                 unban_time = ban.unbanned_at_time.strftime('%d.%m.%Y %H:%M')
-                history_text += f"   ✅ Снят: {unban_time}\n"
+                history_text += translate('admin.banhistory.unbanned_at', message.from_user.id, time=unban_time) + "\n"
             history_text += "   " + "─" * 20 + "\n"
         
         if len(ban_history) > 10:
-            history_text += f"\n... и еще {len(ban_history) - 10} записей | and {len(ban_history) - 10} more records"
+            history_text += translate('admin.banhistory.more_records', message.from_user.id, count=len(ban_history) - 10)
         
         await message.answer(history_text, parse_mode="HTML")

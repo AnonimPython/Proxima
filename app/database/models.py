@@ -115,40 +115,40 @@ class FoundMatchSchema(SQLModel, table=True):
     match_id: Optional[int] = Field(foreign_key="matches.match_id", default=None)
     
 
-    def get_players_list(self) -> List[int]:
-        """Get Python list of players"""
-        return json.loads(self.players)
+    # def get_players_list(self) -> List[int]:
+    #     """Get Python list of players"""
+    #     return json.loads(self.players)
     
-    def add_player(self, telegram_id: int) -> bool:
-        """Добавить игрока в лобби"""
-        '''Adding player in lobby'''
-        players = self.get_players_list()
-        if len(players) < self.max_players and telegram_id not in players:
-            players.append(telegram_id)
-            self.players = json.dumps(players)
-            self.current_players = len(players)
+    # def add_player(self, telegram_id: int) -> bool:
+    #     """Добавить игрока в лобби"""
+    #     '''Adding player in lobby'''
+    #     players = self.get_players_list()
+    #     if len(players) < self.max_players and telegram_id not in players:
+    #         players.append(telegram_id)
+    #         self.players = json.dumps(players)
+    #         self.current_players = len(players)
             
-            #* Проверка на заполнение лобби (10 человек)
-            #* Cheking are lobby is full (10 players)
-            if self.current_players >= self.max_players:
-                self.status = "full"
-                self.game_started_at = datetime.now(moscow_tz)
-                return True  #* Лобби заполнено| Lobby not full
-            return True  #* Игрок добавлен| User added
-        return False  #* Не удалось добавить| Error to adding user
+    #         #* Проверка на заполнение лобби (10 человек)
+    #         #* Cheking are lobby is full (10 players)
+    #         if self.current_players >= self.max_players:
+    #             self.status = "full"
+    #             self.game_started_at = datetime.now(moscow_tz)
+    #             return True  #* Лобби заполнено| Lobby not full
+    #         return True  #* Игрок добавлен| User added
+    #     return False  #* Не удалось добавить| Error to adding user
     
-    def remove_player(self, telegram_id: int) -> bool:
-        """Удалить игрока из лобби"""
-        '''Remode player from lobby'''
-        players = self.get_players_list()
-        if telegram_id in players:
-            players.remove(telegram_id)
-            self.players = json.dumps(players)
-            self.current_players = len(players)
-            #* Сбрасываем статус, т.к. лобби не полное| Reset status because lobby are empty
-            self.status = "waiting"  
-            return True
-        return False
+    # def remove_player(self, telegram_id: int) -> bool:
+    #     """Удалить игрока из лобби"""
+    #     '''Remode player from lobby'''
+    #     players = self.get_players_list()
+    #     if telegram_id in players:
+    #         players.remove(telegram_id)
+    #         self.players = json.dumps(players)
+    #         self.current_players = len(players)
+    #         #* Сбрасываем статус, т.к. лобби не полное| Reset status because lobby are empty
+    #         self.status = "waiting"  
+    #         return True
+    #     return False
     
     #* данная функция запускается после каждого входа любого игрока
     #* This func activating after player connecting in lobby
@@ -162,15 +162,15 @@ class UserBansSchema(SQLModel, table=True):
     
     ban_id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="users.user_id", nullable=False)
-    banned_by: int = Field(foreign_key="users.user_id", nullable=False)  # Кто забанил
+    banned_by: int = Field(foreign_key="users.user_id", nullable=False)  # Кто забанил | Who ban
     ban_type: str = Field(default="admin_mute")  # admin_mute, lobby_leave, etc
     reason: str = Field(default="Не указана")
-    duration_minutes: int = Field(default=60)  # Длительность в минутах
+    duration_minutes: int = Field(default=60)  # Длительность в минутах | Time in minutes
     banned_at: datetime = Field(default_factory=lambda: datetime.now(moscow_tz))
     unbanned_at: datetime = Field(default_factory=lambda: datetime.now(moscow_tz) + timedelta(minutes=60))
     is_active: bool = Field(default=True)
-    unbanned_by: Optional[int] = Field(foreign_key="users.user_id", default=None)  # Кто разбанил
-    unbanned_at_time: Optional[datetime] = Field(default=None)  # Когда разбанен
+    unbanned_by: Optional[int] = Field(foreign_key="users.user_id", default=None)  # Кто разбанил | Who unban
+    unbanned_at_time: Optional[datetime] = Field(default=None)  # Когда разбанен | When take unban
 
 class MatchPhotosSchema(SQLModel, table=True):
     __tablename__ = "match_photos"

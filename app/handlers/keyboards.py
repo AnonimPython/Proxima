@@ -3,7 +3,7 @@ from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
 #* Usings Bilders
 from aiogram.utils.keyboard import ReplyKeyboardBuilder,InlineKeyboardBuilder
 #* Локализация | Localization
-from localization import translate
+from ..localization import translate
 # Основные команды | Main commands
 def get_main_keyboard():
     builder = ReplyKeyboardBuilder()
@@ -43,7 +43,6 @@ def get_game_keyboard():
         # KeyboardButton(text="🎮 Найти лобби"),
         # KeyboardButton(text="📊 Мой профиль"),
         # KeyboardButton(text="📈 Статистика"),
-        # #todo: take from CONFIG name of project
         # KeyboardButton(text="🏆 Топ Proxima"),
     )
     

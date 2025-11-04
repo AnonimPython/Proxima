@@ -13,8 +13,8 @@ import json
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from sqlmodel import Session, select
-from database.models import engine, UsersSchema, GameProfilesSchema, MatchesSchema, FoundMatchSchema, UserBansSchema
-from localization import translate
+from app.database.models import engine, UsersSchema, GameProfilesSchema, MatchesSchema, FoundMatchSchema, UserBansSchema
+from app.localization import translate
 
 router = Router()
 moscow_tz = ZoneInfo("Europe/Moscow")

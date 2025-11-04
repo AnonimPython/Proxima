@@ -8,15 +8,15 @@ from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from .matches import lobby_handler
+from app.handlers.matches import lobby_handler
 #* Локализация | Localization
-from localization import translate
+from app.localization import translate
 
 #* Keyboards | Клавиатуры
-from .keyboards import get_main_keyboard, get_game_keyboard, get_start_keyboard
+from app.handlers.keyboards import get_main_keyboard, get_game_keyboard, get_start_keyboard
 #* Database | База данных
 from sqlmodel import Session, select
-from database.models import (
+from app.database.models import (
     engine,
     UsersSchema,
     GameProfilesSchema,
@@ -131,7 +131,7 @@ async def profile_handler(message: Message):
             next_level_text = translate('profile.max_level', telegram_id)
         else:
             next_level_text = f"{exp_to_next} {translate('profile.elo', telegram_id)}"
-        
+        #todo: сделать видимый id профиля, который выдает бот при регистрации, чтобы реализовать invite в клан
         await message.answer(
             f"👤 <b>{nickname}</b>\n"
             f"🏆 <b>{translate('profile.league', telegram_id)}:</b> {league.capitalize()}\n"

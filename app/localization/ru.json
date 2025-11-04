@@ -1,8 +1,16 @@
 {
   "start": {
-    "welcome": "🎮 Добро пожаловать в FaceIT бот!",
-    "welcome_back": "👋 С возвращением, {username}!",
-    "register_prompt": "Для начала игры нужно зарегистрировать игровой профиль."
+    "welcome": "🎮 Добро пожаловать на проект {project_name}!",
+    "welcome_back": "👋 С возвращением, {username}\n🔥 {project_name} бот на связи!",
+    "register_prompt": "Для начала игры нужно зарегистрировать игровой профиль.",
+    "confirm":"✅ Подтвердить",
+    "remake":"✏️ Изменить"
+  },
+  "project_info": {
+    "about": "🎮 <b>Telegram бот для организации игровых турниров</b>",
+    "project_name": "🏆 <b>Название проекта:</b> {project_name}",
+    "owner_of_bot": "👨‍💻 <b>Разработчик:</b> <a href='https://github.com/AnonimPython'>AnonimPython</a>",
+    "game_of_project": "🎯 <b>Турниры по игре:</b> {game_name}"
   },
   "register": {
     "already_exists": "✅ У вас уже есть игровой профиль!",
@@ -13,7 +21,11 @@
     "enter_nickname": "👤 Введите ваш никнейм:",
     "nickname_rules": "• От 2 до 16 символов",
     "invalid_nickname": "❌ Неверный никнейм! От 2 до 16 символов.",
-    "complete": "🎉 Регистрация завершена!"
+    "complete": "🎉 Регистрация завершена!",
+    "nick":"Ник",
+    "id":"ID",
+    "league":"Лига",
+    "starter_league": "Starter"
   },
   "help": {
     "title": "🎮 <b>КОМАНДЫ БОТА</b>",
@@ -117,6 +129,21 @@
   },
   "user_banned": "🔴 <b>ВЫ ЗАБАНЕНЫ</b>\n\n⏰ <b>Срок:</b> {minutes} минут\n📝 <b>Причина:</b> {reason}\n🕒 <b>Разбан:</b> {ban_until}\n\nПо вопросам обращайтесь к администрации",
   "admin": {
+    "banhistory": {
+      "wrong_format": "❗️ <b>Неправильный формат</b> ❗️\n\n<b>Использование:</b>\n<code>/banhistory @username</code>\n<code>/banhistory 123456789</code>",
+      "empty": "📋 <b>История банов пользователя {identifier} пуста</b>",
+      "title": "📋 <b>ИСТОРИЯ БАНОВ</b>\n👤 <b>Пользователь:</b> {identifier}\n\n",
+      "active": "🔴 АКТИВЕН",
+      "removed": "✅ СНЯТ",
+      "unbanned_at": "   ✅ Снят: {time}",
+      "more_records": "\n... и еще {count} записей"
+    },
+    "banlist": {
+      "empty": "📋 <b>Список активных банов пуст</b>",
+      "title": "📋 <b>СПИСОК АКТИВНЫХ БАНОВ</b>\n\n",
+      "until": "🕒 До: {time}",
+      "permanent": "🕒 Пермабан"
+    },
     "no_access": "❌ Нет прав доступа ❌",
     "only_admins": "❌ Только для администраторов ❌",
     "make_admin": {

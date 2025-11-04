@@ -4,7 +4,7 @@ ACCESS CHECKER FOR ADMIN/MODERATOR COMMANDS
 '''
 
 from sqlmodel import Session, select
-from database.models import engine, UsersSchema
+from app.database.models import engine, UsersSchema
 
 def is_admin(user_id: int) -> bool:
     """

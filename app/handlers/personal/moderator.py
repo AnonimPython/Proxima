@@ -7,12 +7,12 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from datetime import datetime, timedelta
 from sqlmodel import Session, select
-from database.models import engine, UsersSchema, UserBansSchema
+from app.database.models import engine, UsersSchema, UserBansSchema
 from zoneinfo import ZoneInfo
 import re
 
-from utils.access_checker import is_moderator, find_user_by_identifier, can_ban_user
-from localization import translate
+from app.utils.access_checker import is_moderator, find_user_by_identifier, can_ban_user
+from app.localization import translate
 
 router = Router()
 moscow_tz = ZoneInfo("Europe/Moscow")
@@ -234,7 +234,10 @@ async def mod_warn_command(message: Message):
 
 @router.message(Command("mod_unban"))
 async def mod_unban_command(message: Message):
-    """Разбан пользователя (только свои баны)"""
+    """
+        Разбан пользователя (только свои баны)
+        Unban users (only my moderator who ban)
+    """
     
     if not is_moderator(message.from_user.id):
         await message.answer(translate('moderator.no_access', message.from_user.id))

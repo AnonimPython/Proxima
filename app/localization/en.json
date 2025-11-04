@@ -1,8 +1,16 @@
 {
   "start": {
-    "welcome": "🎮 Welcome to FaceIT bot!",
-    "welcome_back": "👋 Welcome back, {username}!",
-    "register_prompt": "To start playing, you need to register a game profile."
+    "welcome": "🎮 Welcome to {project_name}",
+    "welcome_back": "👋 Welcome back, {username}\n🔥 {project_name} bot is active!",
+    "register_prompt": "To start playing, you need to register a game profile.",
+    "confirm":"✅ Confirm",
+    "remake":"✏️ Edit"
+  },
+  "project_info": {
+    "about": "🎮 <b>Telegram bot for organizing gaming tournaments</b>",
+    "project_name": "🏆 <b>Project name:</b> {project_name}",
+    "owner_of_bot": "👨‍💻 <b>Developer:</b> <a href='https://github.com/AnonimPython'>AnonimPython</a>",
+    "game_of_project": "🎯 <b>Tournaments for game:</b> {game_name}"
   },
   "register": {
     "already_exists": "✅ You already have a game profile!",
@@ -13,7 +21,11 @@
     "enter_nickname": "👤 Enter your nickname:",
     "nickname_rules": "• 2-16 characters",
     "invalid_nickname": "❌ Invalid nickname! 2-16 characters.",
-    "complete": "🎉 Registration completed!"
+    "complete": "🎉 Registration completed!",
+    "nick":"Nickname",
+    "id":"ID",
+    "league":"League",
+    "starter_league": "Starter"
   },
   "help": {
     "title": "🎮 <b>BOT COMMANDS</b>",
@@ -117,6 +129,21 @@
   },
   "user_banned": "🔴 <b>YOU ARE BANNED</b>\n\n⏰ <b>Duration:</b> {minutes} minutes\n📝 <b>Reason:</b> {reason}\n🕒 <b>Unban:</b> {ban_until}\n\nContact administration for questions",
   "admin": {
+    "banhistory": {
+      "wrong_format": "❗️ <b>Wrong format</b> ❗️\n\n<b>Usage:</b>\n<code>/banhistory @username</code>\n<code>/banhistory 123456789</code>",
+      "empty": "📋 <b>Ban history for user {identifier} is empty</b>",
+      "title": "📋 <b>BAN HISTORY</b>\n👤 <b>User:</b> {identifier}\n\n",
+      "active": "🔴 ACTIVE",
+      "removed": "✅ REMOVED",
+      "unbanned_at": "   ✅ Unbanned: {time}",
+      "more_records": "\n... and {count} more records"
+    },
+    "banlist": {
+      "empty": "📋 <b>Active bans list is empty</b>",
+      "title": "📋 <b>ACTIVE BANS LIST</b>\n\n",
+      "until": "🕒 Until: {time}",
+      "permanent": "🕒 Permanent"
+    },
     "no_access": "❌ No access rights ❌",
     "only_admins": "❌ For administrators only ❌",
     "make_admin": {

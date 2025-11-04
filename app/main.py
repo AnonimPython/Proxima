@@ -15,13 +15,13 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 
-from handlers.start import router
-from handlers.base_commands import router as bs_router
-from handlers.matches import router as matches_router
-from handlers.clans import router as clans_router
-from handlers.personal.admin import router as admin_router
-from handlers.personal.moderator import router as moderator_router
-from handlers.register_matches import router as register_matches_router
+from app.handlers.start import router
+from app.handlers.base_commands import router as bs_router
+from app.handlers.matches import router as matches_router
+from app.handlers.clans import router as clans_router
+from app.handlers.personal.admin import router as admin_router
+from app.handlers.personal.moderator import router as moderator_router
+from app.handlers.register_matches import router as register_matches_router
 
 
 BOT_TOKEN = os.getenv('TELEGRAM_TOKEN')

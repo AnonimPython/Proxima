@@ -14,14 +14,14 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 # Локализация | Localization
-from localization import translate
+from app.localization import translate
 
+from app.config import *
 #* Keyboards | Клавиатуры
-from .keyboards import get_main_keyboard, get_game_keyboard, get_start_keyboard
+from app.handlers.keyboards import get_main_keyboard, get_game_keyboard, get_start_keyboard
 #* Database | База данных
 from sqlmodel import Session, select
-from typing import Optional
-from database.models import (
+from app.database.models import (
     engine,
     UsersSchema,
     GameProfilesSchema,
@@ -51,8 +51,8 @@ def get_user_league(telegram_id: int):
 def get_confirmation_keyboard():
     """Создает клавиатуру подтверждения | Creates confirmation keyboard"""
     builder = InlineKeyboardBuilder()
-    builder.button(text="✅ Подтвердить", callback_data="confirm_registration")
-    builder.button(text="✏️ Изменить", callback_data="edit_registration")
+    builder.button(text=f"{translate('start.confirm')}\n", callback_data="confirm_registration")
+    builder.button(text=f"{translate('start.remake')}\n", callback_data="edit_registration")
     builder.adjust(2)  # 2 кнопки в ряд
     return builder.as_markup()
 
@@ -60,8 +60,9 @@ def get_confirmation_keyboard():
 @router.message(CommandStart())
 async def start_handler(message: Message):
     telegram_id = message.from_user.id
-    username = message.from_user.username or "Игрок"
-    first_name = message.from_user.first_name or "Игрок"
+    username = message.from_user.username or "Игрок|Player"
+    # project_name = Config.BOT_NAME
+    first_name = message.from_user.first_name or "Игрок|Player"
     last_name = message.from_user.last_name or ""
     
     with Session(engine) as session:
@@ -81,25 +82,38 @@ async def start_handler(message: Message):
             session.refresh(user)
             
             await message.answer(
-                f"{translate('start.welcome', telegram_id)}\n\n"
-                f"{translate('start.register_prompt', telegram_id)}\n\n"
-                f"Привет! Твой Telegram ID: {telegram_id}\n"
-                f"Твоё имя: {first_name}\n"
-                f"Username: {username}",
+                f"{translate('start.welcome', telegram_id, project_name=Config.BOT_NAME)}\n\n"
+                f"{translate('start.register_prompt', telegram_id)}\n\n",
+                # f"Привет! Твой Telegram ID: {telegram_id}\n"
+                # f"Твоё имя: {first_name}\n"
+                # f"Username: {username}",
                 reply_markup=get_start_keyboard()
             )
         else:
             await message.answer(
-                f"{translate('start.welcome_back', telegram_id, username=username)}\n\n"
+                f"{translate('start.welcome_back', telegram_id, username=username,project_name=Config.BOT_NAME)}\n\n"
                 "Доступные команды:\n"
                 "/profile - Профиль\n"
                 "/lobby - Найти лобби\n" 
                 "/stats - Статистика\n"
                 "/top - Топ игроков\n\n",
+                "/project - Информация о проекте\n\n",
                 parse_mode="HTML",
                 reply_markup=get_game_keyboard()
             )
-    
+@router.message(Command("project"))
+async def project_info(message: Message):
+    telegram_id = message.from_user.id
+    await message.answer(
+        f"{translate('project_info.about', telegram_id)}\n"
+        f"{translate('project_info.project_name', telegram_id, project_name=Config.BOT_NAME)}\n"
+        f"{translate('project_info.game_of_project', telegram_id, game_name=Config.GAME_NAME)}\n"
+        f"{translate('project_info.owner_of_bot', telegram_id)}\n",
+        parse_mode="HTML",
+        reply_markup=get_game_keyboard(),
+        disable_web_page_preview=True
+    )
+
 @router.message(Command("register"))
 async def command_register_handler(message: Message, state: FSMContext) -> None:
     """Начало регистрации игрового профиля | Start game profile registration"""
@@ -134,9 +148,9 @@ async def command_register_handler(message: Message, state: FSMContext) -> None:
         if existing_profile:
             await message.answer(
                 f"{translate('register.already_exists', telegram_id)}\n\n"
-                f"Ник: {existing_profile.nickname}\n"
-                f"ID: {existing_profile.game_id}\n"
-                f"Лига: {league.capitalize() if league else 'Starter'}"
+                f"{translate('register.nick', telegram_id)}: {existing_profile.nickname}\n"
+                f"{translate('register.id', telegram_id)}: {existing_profile.game_id}\n"
+                f"{translate('register.league', telegram_id)}: {league.capitalize() if league else translate('register.starter_league', telegram_id)}"
             )
             return
         

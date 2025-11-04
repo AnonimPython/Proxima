@@ -11,7 +11,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from datetime import datetime
 from sqlmodel import Session, select
-from database.models import engine, MatchesSchema, MatchPlayersSchema, UsersSchema, MatchPhotosSchema, GameProfilesSchema
+from app.database.models import engine, MatchesSchema, MatchPlayersSchema, UsersSchema, MatchPhotosSchema, GameProfilesSchema
 from zoneinfo import ZoneInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 

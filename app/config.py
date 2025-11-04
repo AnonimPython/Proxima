@@ -1,15 +1,34 @@
+text='''
+ ▗▄▖ ▗▖  ▗▖ ▗▄▖ ▗▖  ▗▖▗▄▄▄▖▗▖  ▗▖▗▄▄▖ ▗▖  ▗▖▗▄▄▄▖▗▖ ▗▖ ▗▄▖ ▗▖  ▗▖
+▐▌ ▐▌▐▛▚▖▐▌▐▌ ▐▌▐▛▚▖▐▌  █  ▐▛▚▞▜▌▐▌ ▐▌ ▝▚▞▘   █  ▐▌ ▐▌▐▌ ▐▌▐▛▚▖▐▌
+▐▛▀▜▌▐▌ ▝▜▌▐▌ ▐▌▐▌ ▝▜▌  █  ▐▌  ▐▌▐▛▀▘   ▐▌    █  ▐▛▀▜▌▐▌ ▐▌▐▌ ▝▜▌
+▐▌ ▐▌▐▌  ▐▌▝▚▄▞▘▐▌  ▐▌▗▄█▄▖▐▌  ▐▌▐▌     ▐▌    █  ▐▌ ▐▌▝▚▄▞▘▐▌  ▐▌
+'''
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class Config:
-    BOT_TOKEN = os.getenv('TELEGRAM_TOKEN')
+    # Настройка бота
     BOT_NAME = "Proxima"
     GAME_NAME = "Standoff 2"
-    
-    # Настройки лобби
-    MAX_PLAYERS = 10
-    AVAILABLE_MAPS = ["Sandstone", "Breeze", "Dune", "Hanami", "Province","Rust","Zone 7"]
 
+    # # Настройки лобби | Lobby settings
+    # MAX_PLAYERS = 10
+    # AVAILABLE_MAPS = ["Sandstone", "Breeze", "Dune", "Hanami", "Province","Rust","Zone 7"]
+
+    # ALL_COMMANDS = ["/profile", "/stats","/top"]
+    '''
+    text = "📋 Список команд | All commands\n\n"
+    for i in commands:
+        text += f"- {i}\n"
+    
+    await message.answer(text)
+    '''
+    #! запуск проекта | start project: python3 -m app.main
 config = Config()
+
+url = "https://github.com/AnonimPython/"
+link_code = f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
+print(link_code)
