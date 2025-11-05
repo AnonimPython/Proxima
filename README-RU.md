@@ -46,7 +46,7 @@ git clone https://github.com/AnonimPython/Proxima.git
 cd Proxima
 
 # Собрать Docker образ
-docker build -t faceit-bot .
+docker build -t proxima .
 
 # Запустить контейнер
 docker run proxima
