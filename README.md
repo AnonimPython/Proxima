@@ -46,7 +46,7 @@ git clone https://github.com/AnonimPython/Proxima.git
 cd Proxima
 
 # Build the Docker image
-docker build -t faceit-bot .
+docker build -t proxima .
 
 # Run the container
 docker run proxima 
@@ -142,7 +142,7 @@ docker run proxima
 * `/banlist` - Check list of banned users
 * `/banhistory` - Show user ban history (10 )
 
-### Admin Commands
+### Moderator Commands
 
 * `/make_moderator` - Make you moderator (ONLY FOR TEST)
 * `/mod_ban` - Temporary ban (max 7 days)
