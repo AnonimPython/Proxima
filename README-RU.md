@@ -182,7 +182,7 @@ BTC - ``bc1q26zdaa9uzudperm2m7e3qr04l5rackm6cee7xk``
 
 ## 📝 Eng Documentation
 
-[Русская документация](https://github.com/AnonimPython/Proxima/blob/main/README.md)
+[Eng Docs](https://github.com/AnonimPython/Proxima/blob/main/README.md)
 
 ## 📄 Лицензия
 
